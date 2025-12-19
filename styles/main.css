@@ -1,0 +1,34 @@
+/**
+ * Main CSS File
+ * Imports all section-specific stylesheets
+ */
+
+/* Base Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Base Body Styles */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    background: #000000;
+    min-height: 100vh;
+    color: #fff;
+    overflow: hidden;
+}
+
+/* App Container */
+#app {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+}
+
+/* Import Section-Specific Styles */
+@import url('css/logo.css');
+@import url('css/menu-bar.css');
+@import url('css/module-menu.css');
+@import url('css/main-window.css');
+

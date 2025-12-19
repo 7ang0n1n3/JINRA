@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JINRA - Command and Control Framework</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/css/logo.css">
+    <link rel="stylesheet" href="styles/css/menu-bar.css">
+    <link rel="stylesheet" href="styles/css/module-menu.css">
+    <link rel="stylesheet" href="styles/css/main-window.css">
+</head>
+<body>
+    <div id="app">
+        <!-- LOGO Section -->
+        <div id="logo" class="logo-section">
+            <div class="logo-content">LOGO</div>
+        </div>
+
+        <!-- MENU BAR Section -->
+        <div id="menu-bar" class="menu-bar-section">
+            <div class="menu-bar-content">MENU BAR</div>
+        </div>
+
+        <!-- MODULE MENU Section -->
+        <div id="module-menu" class="module-menu-section">
+            <div class="module-menu-content">MODULE MENU</div>
+        </div>
+
+        <!-- MAIN WINDOW Section -->
+        <div id="main-window" class="main-window-section">
+            <div id="modules-container" class="main-window-content">
+                <!-- Modules will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings (loaded first) -->
+    <script src="data/settings.js"></script>
+    
+    <!-- Core Framework -->
+    <script src="js/core.js"></script>
+    
+    <!-- Framework will load modules and libraries based on settings -->
+</body>
+</html>
+
