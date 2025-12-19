@@ -356,11 +356,44 @@
     flex: 1;
 }
 
+.okr-kr-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
 .okr-kr-title {
     font-size: 0.95rem;
-    margin-bottom: 6px;
     white-space: pre-wrap;
     color: rgba(255, 255, 255, 0.9);
+    flex: 1;
+}
+
+.okr-kr-status-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.okr-kr-status-on-track {
+    background: #10b981;
+    color: white;
+}
+
+.okr-kr-status-off-track {
+    background: #eab308;
+    color: black;
+}
+
+.okr-kr-status-at-risk {
+    background: #ef4444;
+    color: white;
 }
 
 .okr-kr-dates-display {
@@ -556,9 +589,52 @@
     font-family: inherit;
 }
 
-.okr-form-field textarea {
+/* Date input specific styling for better visibility */
+.okr-form-field input[type="date"],
+.okr-kr-date-field input[type="date"] {
+    color: white;
+    color-scheme: dark;
+}
+
+.okr-form-field input[type="date"]::-webkit-calendar-picker-indicator,
+.okr-kr-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5) contrast(1.2);
+    cursor: pointer;
+    opacity: 1 !important;
+    width: 20px;
+    height: 20px;
+    padding: 2px;
+    background: transparent;
+}
+
+/* Firefox date picker styling */
+.okr-form-field input[type="date"],
+.okr-kr-date-field input[type="date"] {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 16px;
+    padding-right: 35px;
+}
+
+.okr-form-field input[type="date"]::-webkit-datetime-edit-text,
+.okr-form-field input[type="date"]::-webkit-datetime-edit-month-field,
+.okr-form-field input[type="date"]::-webkit-datetime-edit-day-field,
+.okr-form-field input[type="date"]::-webkit-datetime-edit-year-field,
+.okr-kr-date-field input[type="date"]::-webkit-datetime-edit-text,
+.okr-kr-date-field input[type="date"]::-webkit-datetime-edit-month-field,
+.okr-kr-date-field input[type="date"]::-webkit-datetime-edit-day-field,
+.okr-kr-date-field input[type="date"]::-webkit-datetime-edit-year-field {
+    color: white;
+    padding: 0 2px;
+}
+
+.okr-form-field textarea,
+#okr-kr-title {
     resize: vertical;
     min-height: 80px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .okr-form-field select:focus,
@@ -579,10 +655,21 @@
 .okr-kr-target label {
     color: rgba(255, 255, 255, 0.7);
     font-size: 0.9rem;
+    white-space: nowrap;
 }
 
 .okr-kr-target input {
-    width: 100px;
+    flex: 0 0 auto;
+    min-width: 80px;
+    max-width: 150px;
+}
+
+.okr-btn-small {
+    padding: 6px 12px;
+    font-size: 0.75rem;
+    margin-left: 8px;
+    background: rgba(102, 126, 234, 0.4);
+    border: 1px solid rgba(102, 126, 234, 0.6);
 }
 
 .okr-kr-dates {
@@ -591,16 +678,50 @@
     margin-bottom: 15px;
 }
 
+.okr-kr-date-field label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
 .okr-kr-date-field {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    min-width: 0; /* Prevents flex item from overflowing */
 }
 
-.okr-kr-date-field label {
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 0.9rem;
+.okr-kr-date-field input[type="date"] {
+    width: 100%;
+    padding: 10px 35px 10px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(20, 20, 20, 0.6);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='white' viewBox='0 0 16 16'%3E%3Cpath d='M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 16px 16px;
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+    color-scheme: dark;
+    box-sizing: border-box;
+}
+
+.okr-kr-date-field input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5) contrast(1.2);
+    cursor: pointer;
+    opacity: 1 !important;
+    width: 20px;
+    height: 20px;
+    padding: 2px;
+    background: transparent;
+}
+
+.okr-kr-date-field input[type="date"]:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 .okr-empty-state {

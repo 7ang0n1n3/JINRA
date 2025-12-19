@@ -479,7 +479,7 @@ class OKRTracker {
             <div id="okr-objective-modal" class="okr-modal">
                 <div class="okr-modal-content okr-modal-wide">
                     <span class="okr-close" data-modal="okr-objective-modal">&times;</span>
-                    <h3 id="okr-objective-modal-title">Add Objective</h3>
+                    <h3 id="okr-objective-modal-title">Objective</h3>
                     <form id="okr-objective-form">
                         <input type="hidden" id="okr-objective-edit-id">
                         <div class="okr-form-row">
@@ -531,6 +531,10 @@ class OKRTracker {
                             <label>Purpose</label>
                             <textarea id="okr-objective-purpose" placeholder="Why is this objective important?" rows="2"></textarea>
                         </div>
+                        <div class="okr-form-field">
+                            <label>Last Check-in</label>
+                            <input type="date" id="okr-objective-last-checkin">
+                        </div>
                         <button type="submit">Save Objective</button>
                     </form>
                 </div>
@@ -540,7 +544,7 @@ class OKRTracker {
             <div id="okr-kr-modal" class="okr-modal">
                 <div class="okr-modal-content">
                     <span class="okr-close" data-modal="okr-kr-modal">&times;</span>
-                    <h3 id="okr-kr-modal-title">Add Key Result</h3>
+                    <h3 id="okr-kr-modal-title">Key Result</h3>
                     <form id="okr-kr-form">
                         <input type="hidden" id="okr-kr-edit-id">
                         <input type="hidden" id="okr-kr-objective-id">
@@ -552,6 +556,15 @@ class OKRTracker {
                         <div class="okr-kr-target">
                             <label>Weight (%):</label>
                             <input type="number" id="okr-kr-weight" value="100" min="0" max="100" required>
+                            <button type="button" id="okr-btn-balance-krs" class="okr-btn-small">Balance KRs</button>
+                        </div>
+                        <div class="okr-form-field">
+                            <label>Status</label>
+                            <select id="okr-kr-status">
+                                <option value="on-track">On Track</option>
+                                <option value="off-track">Off Track</option>
+                                <option value="at-risk">At Risk</option>
+                            </select>
                         </div>
                         <div class="okr-kr-dates">
                             <div class="okr-kr-date-field">
@@ -563,7 +576,11 @@ class OKRTracker {
                                 <input type="date" id="okr-kr-target-date" required>
                             </div>
                         </div>
-                        <button type="submit">Add Key Result</button>
+                        <div class="okr-form-field">
+                            <label>Last Check-in</label>
+                            <input type="date" id="okr-kr-last-checkin">
+                        </div>
+                        <button type="submit" id="okr-kr-submit-btn">Add Key Result</button>
                     </form>
                 </div>
             </div>
@@ -592,6 +609,17 @@ class OKRTracker {
             krForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.saveKeyResult();
+            });
+        }
+
+        // Balance KRs button
+        const balanceKRsBtn = document.getElementById('okr-btn-balance-krs');
+        if (balanceKRsBtn) {
+            balanceKRsBtn.addEventListener('click', () => {
+                const objectiveId = document.getElementById('okr-kr-objective-id').value;
+                if (objectiveId) {
+                    this.balanceKRWeights(objectiveId);
+                }
             });
         }
 
@@ -685,6 +713,18 @@ class OKRTracker {
     }
 
     /**
+     * Get status label from status value
+     */
+    getStatusLabel(status) {
+        const labels = {
+            'on-track': 'On Track',
+            'off-track': 'Off Track',
+            'at-risk': 'At Risk'
+        };
+        return labels[status] || 'On Track';
+    }
+
+    /**
      * Render objectives
      */
     renderObjectives() {
@@ -716,6 +756,7 @@ class OKRTracker {
                                 <span class="okr-obj-badge">${obj.weight || 100}%</span>
                                 ${obj.startDate ? `<span class="okr-obj-badge">Start: ${obj.startDate}</span>` : ''}
                                 ${obj.targetDate ? `<span class="okr-obj-badge">Due: ${obj.targetDate}</span>` : ''}
+                                ${obj.lastCheckin ? `<span class="okr-obj-badge">Last Check-in: ${obj.lastCheckin}</span>` : ''}
                             </div>
                             <div class="okr-objective-content-box">
                                 <label class="okr-box-label">Objective</label>
@@ -747,8 +788,12 @@ class OKRTracker {
                                     return `
                                         <div class="okr-kr-item" data-kr-id="${kr.id}">
                                             <div class="okr-kr-info">
-                                                <div class="okr-kr-title">${this.escapeHtml(kr.title)}</div>
+                                                <div class="okr-kr-title-row">
+                                                    <div class="okr-kr-title">${this.escapeHtml(kr.title)}</div>
+                                                    <span class="okr-kr-status-badge okr-kr-status-${kr.status || 'on-track'}">${this.getStatusLabel(kr.status || 'on-track')}</span>
+                                                </div>
                                                 ${kr.startDate && kr.targetDate ? `<div class="okr-kr-dates-display">Start: ${kr.startDate} → Target: ${kr.targetDate}</div>` : ''}
+                                                ${kr.lastCheckin ? `<div class="okr-kr-dates-display">Last Check-in: ${kr.lastCheckin}</div>` : ''}
                                                 <span class="okr-kr-weight-badge">Weight: ${kr.weight || 100}%</span>
                                                 <div class="okr-kr-progress-row">
                                                     <div class="okr-kr-progress-bar">
@@ -787,7 +832,7 @@ class OKRTracker {
         if (objectiveId) {
             const obj = this.data.objectives.find(o => o.id === objectiveId);
             if (obj) {
-                document.getElementById('okr-objective-modal-title').textContent = 'Edit Objective';
+                document.getElementById('okr-objective-modal-title').textContent = 'Objective';
                 document.getElementById('okr-objective-group').value = obj.group || 'Personal';
                 document.getElementById('okr-objective-year').value = obj.year || new Date().getFullYear();
                 document.getElementById('okr-objective-quarter').value = obj.quarter || '1';
@@ -796,6 +841,7 @@ class OKRTracker {
                 document.getElementById('okr-objective-start-date').value = obj.startDate || '';
                 document.getElementById('okr-objective-target-date').value = obj.targetDate || '';
                 document.getElementById('okr-objective-weight').value = obj.weight || 100;
+                document.getElementById('okr-objective-last-checkin').value = obj.lastCheckin || '';
             }
         } else {
             document.getElementById('okr-objective-modal-title').textContent = 'Add Objective';
@@ -803,10 +849,102 @@ class OKRTracker {
             const currentQuarter = Math.ceil((new Date().getMonth() + 1) / 3);
             document.getElementById('okr-objective-quarter').value = currentQuarter;
             document.getElementById('okr-objective-start-date').value = new Date().toISOString().split('T')[0];
+            document.getElementById('okr-objective-last-checkin').value = '';
         }
         
         document.getElementById('okr-objective-modal').classList.add('active');
         document.getElementById('okr-objective-title').focus();
+    }
+
+    /**
+     * Auto-balance objective weights (called when adding new objectives)
+     */
+    autoBalanceObjectiveWeights() {
+        if (this.data.objectives.length === 0) return;
+        const equalWeight = Math.floor(100 / this.data.objectives.length);
+        const remainder = 100 - (equalWeight * this.data.objectives.length);
+        
+        this.data.objectives.forEach((obj, index) => {
+            obj.weight = equalWeight + (index < remainder ? 1 : 0);
+        });
+    }
+
+    /**
+     * Balance other objectives after one is manually set
+     */
+    balanceOtherObjectives(editedId, manualWeight) {
+        if (this.data.objectives.length <= 1) return;
+        
+        const remainingWeight = 100 - manualWeight;
+        const others = this.data.objectives.filter(o => o.id !== editedId);
+        
+        if (others.length === 0) return;
+        
+        const equalWeight = Math.floor(remainingWeight / others.length);
+        const remainder = remainingWeight - (equalWeight * others.length);
+        
+        others.forEach((obj, index) => {
+            obj.weight = equalWeight + (index < remainder ? 1 : 0);
+        });
+    }
+
+    /**
+     * Auto-balance KR weights (called when adding new key results)
+     */
+    autoBalanceKRWeights(objectiveId) {
+        const obj = this.data.objectives.find(o => o.id === objectiveId);
+        if (!obj || !obj.keyResults || obj.keyResults.length === 0) return;
+        
+        const equalWeight = Math.floor(100 / obj.keyResults.length);
+        const remainder = 100 - (equalWeight * obj.keyResults.length);
+        
+        obj.keyResults.forEach((kr, index) => {
+            kr.weight = equalWeight + (index < remainder ? 1 : 0);
+        });
+    }
+
+    /**
+     * Balance other KRs after one is manually set
+     */
+    balanceOtherKRs(objectiveId, editedKRId, manualWeight) {
+        const obj = this.data.objectives.find(o => o.id === objectiveId);
+        if (!obj || !obj.keyResults || obj.keyResults.length <= 1) return;
+        
+        const remainingWeight = 100 - manualWeight;
+        const others = obj.keyResults.filter(kr => kr.id !== editedKRId);
+        
+        if (others.length === 0) return;
+        
+        const equalWeight = Math.floor(remainingWeight / others.length);
+        const remainder = remainingWeight - (equalWeight * others.length);
+        
+        others.forEach((kr, index) => {
+            kr.weight = equalWeight + (index < remainder ? 1 : 0);
+        });
+    }
+
+    /**
+     * Balance key result weights for a specific objective (manual trigger)
+     */
+    async balanceKRWeights(objectiveId) {
+        this.autoBalanceKRWeights(objectiveId);
+        await this.saveData();
+        this.renderObjectives();
+        // Update the weight input in the modal if it's open
+        const weightInput = document.getElementById('okr-kr-weight');
+        if (weightInput) {
+            const objective = this.data.objectives.find(o => o.id === objectiveId);
+            if (objective && objective.keyResults && objective.keyResults.length > 0) {
+                // Find the KR being edited or use the first one
+                const editId = document.getElementById('okr-kr-edit-id').value;
+                const kr = editId 
+                    ? objective.keyResults.find(k => k.id === editId)
+                    : objective.keyResults[0];
+                if (kr) {
+                    weightInput.value = kr.weight;
+                }
+            }
+        }
     }
 
     /**
@@ -822,23 +960,35 @@ class OKRTracker {
             purpose: document.getElementById('okr-objective-purpose').value.trim(),
             startDate: document.getElementById('okr-objective-start-date').value,
             targetDate: document.getElementById('okr-objective-target-date').value,
-            weight: parseInt(document.getElementById('okr-objective-weight').value)
+            weight: parseInt(document.getElementById('okr-objective-weight').value),
+            lastCheckin: document.getElementById('okr-objective-last-checkin').value
         };
         
         if (!formData.title) return;
         
         if (editId) {
+            // Update existing objective
             const obj = this.data.objectives.find(o => o.id === editId);
             if (obj) {
+                const oldWeight = obj.weight;
                 Object.assign(obj, formData);
+                
+                // If weight changed, balance other objectives
+                if (oldWeight !== formData.weight) {
+                    this.balanceOtherObjectives(editId, formData.weight);
+                }
             }
         } else {
+            // Add new objective
             this.data.objectives.push({
                 id: this.generateId(),
                 ...formData,
+                weight: 0, // Will be balanced
                 keyResults: [],
                 createdAt: new Date().toISOString()
             });
+            // Auto-balance all objective weights
+            this.autoBalanceObjectiveWeights();
         }
         
         await this.saveData();
@@ -852,6 +1002,8 @@ class OKRTracker {
     async deleteObjective(id) {
         if (!confirm('Delete this objective and all its key results?')) return;
         this.data.objectives = this.data.objectives.filter(obj => obj.id !== id);
+        // Re-balance weights after deletion
+        this.autoBalanceObjectiveWeights();
         await this.saveData();
         this.renderObjectives();
     }
@@ -863,24 +1015,32 @@ class OKRTracker {
         document.getElementById('okr-kr-objective-id').value = objectiveId;
         document.getElementById('okr-kr-edit-id').value = krId || '';
         
+        const submitBtn = document.getElementById('okr-kr-submit-btn');
+        
         if (krId) {
             const objective = this.data.objectives.find(obj => obj.id === objectiveId);
             const kr = objective?.keyResults?.find(k => k.id === krId);
             if (kr) {
-                document.getElementById('okr-kr-modal-title').textContent = 'Edit Key Result';
+                document.getElementById('okr-kr-modal-title').textContent = 'Key Result';
+                if (submitBtn) submitBtn.textContent = 'Save Key Result';
                 document.getElementById('okr-kr-title').value = kr.title;
                 document.getElementById('okr-kr-target').value = kr.target;
                 document.getElementById('okr-kr-start-date').value = kr.startDate || '';
                 document.getElementById('okr-kr-target-date').value = kr.targetDate || '';
                 document.getElementById('okr-kr-weight').value = kr.weight || 100;
+                document.getElementById('okr-kr-status').value = kr.status || 'on-track';
+                document.getElementById('okr-kr-last-checkin').value = kr.lastCheckin || '';
             }
         } else {
             document.getElementById('okr-kr-modal-title').textContent = 'Add Key Result';
+            if (submitBtn) submitBtn.textContent = 'Add Key Result';
             document.getElementById('okr-kr-title').value = '';
             document.getElementById('okr-kr-target').value = '100';
             document.getElementById('okr-kr-start-date').value = new Date().toISOString().split('T')[0];
             document.getElementById('okr-kr-target-date').value = '';
             document.getElementById('okr-kr-weight').value = '100';
+            document.getElementById('okr-kr-status').value = 'on-track';
+            document.getElementById('okr-kr-last-checkin').value = '';
         }
         
         document.getElementById('okr-kr-modal').classList.add('active');
@@ -898,40 +1058,65 @@ class OKRTracker {
         const startDate = document.getElementById('okr-kr-start-date').value;
         const targetDate = document.getElementById('okr-kr-target-date').value;
         const weight = parseInt(document.getElementById('okr-kr-weight').value);
+        const status = document.getElementById('okr-kr-status').value;
+        const lastCheckin = document.getElementById('okr-kr-last-checkin').value;
         
-        if (!title || !target || !startDate || !targetDate) return;
+        if (!title || !target || !startDate || !targetDate) {
+            alert('Please fill in all required fields');
+            return;
+        }
         
         const objective = this.data.objectives.find(obj => obj.id === objectiveId);
-        if (objective) {
-            if (!objective.keyResults) objective.keyResults = [];
-            
-            if (editId) {
-                const kr = objective.keyResults.find(k => k.id === editId);
-                if (kr) {
-                    kr.title = title;
-                    kr.target = target;
-                    kr.current = Math.min(kr.current, target);
-                    kr.startDate = startDate;
-                    kr.targetDate = targetDate;
-                    kr.weight = weight;
+        if (!objective) {
+            alert('Objective not found');
+            return;
+        }
+        
+        if (!objective.keyResults) objective.keyResults = [];
+        
+        if (editId) {
+            // Update existing key result
+            const kr = objective.keyResults.find(k => k.id === editId);
+            if (kr) {
+                const oldWeight = kr.weight;
+                kr.title = title;
+                kr.target = target;
+                kr.current = Math.min(kr.current, target);
+                kr.startDate = startDate;
+                kr.targetDate = targetDate;
+                kr.weight = weight;
+                kr.status = status;
+                kr.lastCheckin = lastCheckin;
+                
+                // If weight changed, balance other KRs
+                if (oldWeight !== weight) {
+                    this.balanceOtherKRs(objectiveId, editId, weight);
                 }
             } else {
-                objective.keyResults.push({
-                    id: this.generateId(),
-                    title: title,
-                    target: target,
-                    current: 0,
-                    startDate: startDate,
-                    targetDate: targetDate,
-                    weight: weight,
-                    createdAt: new Date().toISOString()
-                });
+                alert('Key Result not found');
+                return;
             }
-            
-            await this.saveData();
-            this.renderObjectives();
-            document.getElementById('okr-kr-modal').classList.remove('active');
+        } else {
+            // Add new key result
+            objective.keyResults.push({
+                id: this.generateId(),
+                title: title,
+                target: target,
+                current: 0,
+                startDate: startDate,
+                targetDate: targetDate,
+                weight: 0, // Will be balanced
+                status: status,
+                lastCheckin: lastCheckin,
+                createdAt: new Date().toISOString()
+            });
+            // Auto-balance all KR weights for this objective
+            this.autoBalanceKRWeights(objectiveId);
         }
+        
+        await this.saveData();
+        this.renderObjectives();
+        document.getElementById('okr-kr-modal').classList.remove('active');
     }
 
     /**
@@ -956,6 +1141,8 @@ class OKRTracker {
         const objective = this.data.objectives.find(obj => obj.id === objectiveId);
         if (objective) {
             objective.keyResults = objective.keyResults.filter(k => k.id !== krId);
+            // Re-balance KR weights after deletion
+            this.autoBalanceKRWeights(objectiveId);
             await this.saveData();
             this.renderObjectives();
         }
@@ -999,6 +1186,7 @@ class OKRTracker {
             text += `Weight:      ${obj.weight || 100}%\n`;
             text += `Start Date:  ${obj.startDate || 'N/A'}\n`;
             text += `Due Date:    ${obj.targetDate || 'N/A'}\n`;
+            text += `Last Check-in: ${obj.lastCheckin || 'N/A'}\n`;
             text += `Progress:    ${progress}%\n\n`;
             text += `Title:\n${obj.title}\n`;
             if (obj.purpose) {
@@ -1011,6 +1199,8 @@ class OKRTracker {
                     const krProgress = Math.min(100, Math.round((kr.current / kr.target) * 100));
                     text += `\n  ${krIndex + 1}. ${kr.title}\n`;
                     text += `     Progress: ${kr.current}/${kr.target} (${krProgress}%)\n`;
+                    text += `     Status:   ${this.getStatusLabel(kr.status || 'on-track')}\n`;
+                    text += `     Last Check-in: ${kr.lastCheckin || 'N/A'}\n`;
                     if (kr.startDate && kr.targetDate) {
                         text += `     Period: ${kr.startDate} → ${kr.targetDate}\n`;
                     }
