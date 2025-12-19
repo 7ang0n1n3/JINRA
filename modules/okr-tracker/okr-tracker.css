@@ -309,9 +309,8 @@
 
 .okr-progress-fill {
     height: 100%;
-    background: linear-gradient(90deg, #667eea, #10b981);
     border-radius: 4px;
-    transition: width 0.4s ease;
+    transition: width 0.4s ease, background 0.4s ease;
 }
 
 .okr-progress-text {
@@ -531,6 +530,10 @@
 
 .okr-modal-help {
     max-width: 600px;
+}
+
+.okr-modal-kr {
+    max-width: 500px; /* 25% wider than default 400px (400 * 1.25 = 500) */
 }
 
 .okr-modal-content h3 {

@@ -542,7 +542,7 @@ class OKRTracker {
 
             <!-- Key Result Modal -->
             <div id="okr-kr-modal" class="okr-modal">
-                <div class="okr-modal-content">
+                <div class="okr-modal-content okr-modal-kr">
                     <span class="okr-close" data-modal="okr-kr-modal">&times;</span>
                     <h3 id="okr-kr-modal-title">Key Result</h3>
                     <form id="okr-kr-form">
@@ -729,6 +729,22 @@ class OKRTracker {
     }
 
     /**
+     * Get progress bar color based on percentage
+     * 0-25%: blue, 26-55%: yellowish, 56-69%: light green, 70-100%: dark green
+     */
+    getProgressColor(percentage) {
+        if (percentage <= 25) {
+            return '#3b82f6'; // blue
+        } else if (percentage <= 55) {
+            return '#eab308'; // yellowish
+        } else if (percentage <= 69) {
+            return '#10b981'; // light green
+        } else {
+            return '#059669'; // dark green
+        }
+    }
+
+    /**
      * Get status label from status value
      */
     getStatusLabel(status) {
@@ -789,7 +805,7 @@ class OKRTracker {
                     </div>
                     <div class="okr-objective-progress">
                         <div class="okr-progress-bar">
-                            <div class="okr-progress-fill" style="width: ${progress}%"></div>
+                            <div class="okr-progress-fill" style="width: ${progress}%; background: ${this.getProgressColor(progress)}"></div>
                         </div>
                         <div class="okr-progress-text">
                             <span>${obj.keyResults?.length || 0} Key Results</span>
