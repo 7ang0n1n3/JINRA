@@ -6,6 +6,8 @@
 .okr-tracker-container {
     padding: 20px;
     color: rgba(255, 255, 255, 0.9);
+    position: relative;
+    min-height: 100%;
 }
 
 .okr-header {
@@ -24,6 +26,27 @@
     font-size: 1.1em;
     text-transform: uppercase;
     letter-spacing: 0.1em;
+}
+
+.okr-file-status-header {
+    margin-top: 10px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+}
+
+.okr-file-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+#okr-file-name {
+    color: #667eea;
+    margin-left: 5px;
+}
+
+#okr-file-name.okr-file-connected {
+    color: #10b981;
 }
 
 .okr-controls {
@@ -411,16 +434,21 @@
     margin-left: 8px;
 }
 
-/* Modals */
+/* Modals - constrained to main window */
 .okr-modal {
     display: none;
     position: fixed;
-    inset: 0;
+    /* Position relative to main window section bounds */
+    top: 100px; /* Below menu bar (80px + 20px margin) */
+    left: 230px; /* Right of module menu (220px + 10px margin) */
+    right: 10px; /* Right edge with margin */
+    bottom: 10px; /* Bottom edge with margin */
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(4px);
-    z-index: 2000;
+    z-index: 999; /* Above main window (998) but below menu bar (1000) */
     align-items: center;
     justify-content: center;
+    border-radius: 8px;
 }
 
 .okr-modal.active {

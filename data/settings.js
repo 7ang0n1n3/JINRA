@@ -4,7 +4,7 @@
  */
 
 window.JINRASettings = {
-  "enabledModules": ["example", "okr-tracker"],
+  "enabledModules": ["okr-tracker"],
   "enabledLibraries": []
 };
 

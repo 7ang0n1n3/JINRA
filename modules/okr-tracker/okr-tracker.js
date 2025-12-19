@@ -10,6 +10,12 @@ class OKRTracker {
         this.description = 'Track Objectives and Key Results with progress monitoring';
         this.data = { objectives: [] };
         this.dataFile = 'data/okr-data.json';
+        this.fileHandle = null;
+        this.FILE_HANDLE_KEY = 'okr_last_file';
+        this.isFileSystemSupported = 'showOpenFilePicker' in window;
+        
+        // Store instance reference for onclick handlers
+        window.okrTracker = this;
     }
 
     /**
@@ -19,6 +25,10 @@ class OKRTracker {
         console.log('OKR Tracker module initialized');
         await this.loadData();
         this.registerMenuButton();
+        // Update file status if module is already open
+        if (document.getElementById('okr-file-name')) {
+            this.updateFileStatus(true);
+        }
     }
 
     /**
@@ -49,6 +59,29 @@ class OKRTracker {
             this.openObjectiveModal();
         });
         
+        // Open File button (if File System API supported)
+        if (this.isFileSystemSupported) {
+            const openBtn = document.createElement('button');
+            openBtn.className = 'menu-bar-button';
+            openBtn.textContent = '📂 Open File';
+            openBtn.id = 'okr-menu-open-file';
+            openBtn.style.display = 'none';
+            openBtn.addEventListener('click', () => {
+                this.openFile();
+            });
+            menuContent.appendChild(openBtn);
+            
+            const newBtn = document.createElement('button');
+            newBtn.className = 'menu-bar-button';
+            newBtn.textContent = '📄 New File';
+            newBtn.id = 'okr-menu-new-file';
+            newBtn.style.display = 'none';
+            newBtn.addEventListener('click', () => {
+                this.createFile();
+            });
+            menuContent.appendChild(newBtn);
+        }
+        
         const exportBtn = document.createElement('button');
         exportBtn.className = 'menu-bar-button';
         exportBtn.textContent = '📥 Export Report';
@@ -77,6 +110,9 @@ class OKRTracker {
      */
     toggleMenuButtons(show) {
         const buttons = ['okr-menu-add-objective', 'okr-menu-export', 'okr-menu-help'];
+        if (this.isFileSystemSupported) {
+            buttons.push('okr-menu-open-file', 'okr-menu-new-file');
+        }
         buttons.forEach(btnId => {
             const btn = document.getElementById(btnId);
             if (btn) {
@@ -89,8 +125,27 @@ class OKRTracker {
      * Load data from JSON file
      */
     async loadData() {
+        // Try to restore last opened file first
+        if (this.isFileSystemSupported) {
+            const restored = await this.tryRestoreLastFile();
+            if (restored) {
+                return;
+            }
+        }
+        
+        // Fallback to localStorage
         try {
-            // Try to load from data directory
+            const stored = localStorage.getItem('okr_data');
+            if (stored) {
+                this.data = JSON.parse(stored);
+                return;
+            }
+        } catch (e) {
+            console.log('No localStorage data found');
+        }
+        
+        // Try to load from data directory as last resort
+        try {
             const response = await fetch(this.dataFile);
             if (response.ok) {
                 this.data = await response.json();
@@ -104,15 +159,194 @@ class OKRTracker {
     }
 
     /**
-     * Save data to JSON file (using download since we can't write to file system)
+     * Save data to file (File System API or localStorage fallback)
      */
     async saveData() {
-        // Since we can't write to file system directly, we'll use localStorage as backup
-        // and provide download option
+        // Save to file if file handle exists
+        if (this.fileHandle) {
+            await this.saveToFile();
+        }
+        
+        // Also save to localStorage as backup
         try {
             localStorage.setItem('okr_data', JSON.stringify(this.data));
         } catch (e) {
             console.error('Failed to save to localStorage:', e);
+        }
+    }
+
+    /**
+     * Load data from file handle
+     */
+    async loadFromFile() {
+        try {
+            const file = await this.fileHandle.getFile();
+            const text = await file.text();
+            this.data = JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to load from file:', e);
+            this.data = { objectives: [] };
+        }
+    }
+
+    /**
+     * Save data to file handle
+     */
+    async saveToFile() {
+        if (!this.fileHandle) return;
+        try {
+            const writable = await this.fileHandle.createWritable();
+            await writable.write(JSON.stringify(this.data, null, 2));
+            await writable.close();
+            this.updateFileStatus(true);
+        } catch (e) {
+            console.error('Failed to save:', e);
+            this.updateFileStatus(false);
+        }
+    }
+
+    /**
+     * Open existing file
+     */
+    async openFile() {
+        if (!this.isFileSystemSupported) {
+            alert('File System Access API is not supported in this browser. Please use Chrome, Edge, or Opera.');
+            return;
+        }
+        
+        try {
+            [this.fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'JSON Files',
+                    accept: { 'application/json': ['.json'] }
+                }]
+            });
+            await this.loadFromFile();
+            this.renderObjectives();
+            this.updateFileStatus(true);
+            await this.storeFileHandle();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error('Failed to open file:', e);
+            }
+        }
+    }
+
+    /**
+     * Create new file
+     */
+    async createFile() {
+        if (!this.isFileSystemSupported) {
+            alert('File System Access API is not supported in this browser. Please use Chrome, Edge, or Opera.');
+            return;
+        }
+        
+        try {
+            this.fileHandle = await window.showSaveFilePicker({
+                suggestedName: 'okr-data.json',
+                types: [{
+                    description: 'JSON Files',
+                    accept: { 'application/json': ['.json'] }
+                }]
+            });
+            this.data = { objectives: [] };
+            await this.saveToFile();
+            this.renderObjectives();
+            this.updateFileStatus(true);
+            await this.storeFileHandle();
+        } catch (e) {
+            if (e.name !== 'AbortError') {
+                console.error('Failed to create file:', e);
+            }
+        }
+    }
+
+    /**
+     * Store file handle in IndexedDB
+     */
+    async storeFileHandle() {
+        if (!this.fileHandle) return;
+        try {
+            const db = await this.openIndexedDB();
+            const tx = db.transaction('fileHandles', 'readwrite');
+            const store = tx.objectStore('fileHandles');
+            await store.put(this.fileHandle, this.FILE_HANDLE_KEY);
+        } catch (e) {
+            console.error('Failed to store file handle:', e);
+        }
+    }
+
+    /**
+     * Retrieve file handle from IndexedDB
+     */
+    async retrieveFileHandle() {
+        try {
+            const db = await this.openIndexedDB();
+            const tx = db.transaction('fileHandles', 'readonly');
+            const store = tx.objectStore('fileHandles');
+            return new Promise((resolve, reject) => {
+                const request = store.get(this.FILE_HANDLE_KEY);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        } catch (e) {
+            console.error('Failed to retrieve file handle:', e);
+            return null;
+        }
+    }
+
+    /**
+     * Open IndexedDB
+     */
+    openIndexedDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('OKRTracker', 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains('fileHandles')) {
+                    db.createObjectStore('fileHandles');
+                }
+            };
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Try to restore last opened file
+     */
+    async tryRestoreLastFile() {
+        try {
+            const storedHandle = await this.retrieveFileHandle();
+            if (storedHandle) {
+                const permission = await storedHandle.requestPermission({ mode: 'readwrite' });
+                if (permission === 'granted') {
+                    this.fileHandle = storedHandle;
+                    await this.loadFromFile();
+                    this.renderObjectives();
+                    this.updateFileStatus(true);
+                    return true;
+                }
+            }
+        } catch (e) {
+            console.log('Could not restore last file:', e.message);
+        }
+        return false;
+    }
+
+    /**
+     * Update file status indicator
+     */
+    updateFileStatus(connected) {
+        const fileNameEl = document.getElementById('okr-file-name');
+        if (fileNameEl) {
+            if (this.fileHandle) {
+                fileNameEl.textContent = this.fileHandle.name;
+                fileNameEl.classList.add('okr-file-connected');
+            } else {
+                fileNameEl.textContent = 'No file selected';
+                fileNameEl.classList.remove('okr-file-connected');
+            }
         }
     }
 
@@ -131,11 +365,21 @@ class OKRTracker {
      * Open the OKR tracker in main window
      */
     openTracker() {
+        // Ensure global reference is set for onclick handlers
+        window.okrTracker = this;
+        
         const mainWindow = document.getElementById('modules-container');
+        // Ensure main window content has position relative for modals
+        const mainWindowContent = mainWindow.closest('.main-window-content') || mainWindow.parentElement;
+        if (mainWindowContent) {
+            mainWindowContent.style.position = 'relative';
+        }
+        
         mainWindow.innerHTML = this.render();
         this.attachEventListeners();
         this.renderObjectives();
         this.toggleMenuButtons(true); // Show menu bar buttons
+        this.updateFileStatus(true); // Update file status display
     }
 
     /**
@@ -147,6 +391,10 @@ class OKRTracker {
                 <div class="okr-header">
                     <h2>🎯 OKR Tracker</h2>
                     <p class="okr-subtitle">Objectives & Key Results</p>
+                    <p id="okr-file-status" class="okr-file-status-header">
+                        <span class="okr-file-label">FILE:</span> 
+                        <span id="okr-file-name">No file selected</span>
+                    </p>
                 </div>
                 
 

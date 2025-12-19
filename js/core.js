@@ -148,7 +148,7 @@ class JINRAFramework {
         // Create module list
         const title = document.createElement('div');
         title.className = 'module-menu-title';
-        title.textContent = 'MODULE MENU';
+        title.textContent = 'MODULES';
         menuContent.appendChild(title);
         
         moduleNames.forEach((moduleName) => {

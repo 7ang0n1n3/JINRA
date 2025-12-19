@@ -16,6 +16,12 @@
     margin: 10px 10px 10px 0;
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Ensure main window content can contain positioned elements */
+.main-window-content {
+    position: relative;
 }
 
 .main-window-content {
