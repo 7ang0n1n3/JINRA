@@ -349,7 +349,20 @@
     gap: 15px;
     padding: 12px;
     background: rgba(30, 30, 30, 0.6);
+    border: 2px solid white;
     border-radius: 10px;
+}
+
+.okr-kr-border-on-track {
+    border-color: #10b981;
+}
+
+.okr-kr-border-off-track {
+    border-color: #eab308;
+}
+
+.okr-kr-border-at-risk {
+    border-color: #ef4444;
 }
 
 .okr-kr-info {
@@ -384,22 +397,36 @@
 .okr-kr-status-on-track {
     background: #10b981;
     color: white;
+    border-color: #10b981 !important;
 }
 
 .okr-kr-status-off-track {
     background: #eab308;
     color: black;
+    border-color: #eab308 !important;
 }
 
 .okr-kr-status-at-risk {
     background: #ef4444;
     color: white;
+    border-color: #ef4444 !important;
 }
 
-.okr-kr-dates-display {
+.okr-kr-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.okr-kr-meta-item {
     font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.5);
-    margin-bottom: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 4px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 6px;
+    white-space: nowrap;
 }
 
 .okr-kr-progress-row {
@@ -459,12 +486,11 @@
 }
 
 .okr-kr-weight-badge {
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     background: #667eea;
     color: white;
-    padding: 2px 8px;
-    border-radius: 4px;
-    margin-left: 8px;
+    padding: 4px 8px;
+    border-radius: 6px;
 }
 
 /* Modals - constrained to main window */

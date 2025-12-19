@@ -129,6 +129,9 @@ class JINRAFramework {
             }
         }
 
+        // Update module menu again to show proper module names (after modules are loaded)
+        this.updateModuleMenu(this.settings.enabledModules);
+
         // Clear loading message if modules were loaded
         if (this.modules.size > 0 && container.querySelector('.loading')) {
             container.innerHTML = '<div class="loading">Select a module from the menu to get started</div>';
@@ -154,7 +157,11 @@ class JINRAFramework {
         moduleNames.forEach((moduleName) => {
             const moduleItem = document.createElement('div');
             moduleItem.className = 'module-menu-item';
-            moduleItem.textContent = moduleName;
+            
+            // Use module's name property if available, otherwise use moduleName
+            const moduleInstance = this.modules.get(moduleName);
+            const displayName = moduleInstance && moduleInstance.name ? moduleInstance.name : moduleName;
+            moduleItem.textContent = displayName;
             moduleItem.dataset.moduleName = moduleName;
             
             // Add click handler to load/activate module in main window

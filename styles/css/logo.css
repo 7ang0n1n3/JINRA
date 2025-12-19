@@ -20,9 +20,27 @@
 }
 
 .logo-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     color: white;
+    text-align: center;
+}
+
+.logo-main {
     font-size: 1.2em;
     font-weight: 600;
     letter-spacing: 1px;
+    line-height: 1.2;
+}
+
+.logo-subscript {
+    font-size: 0.65em;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    opacity: 0.8;
+    margin-top: 2px;
+    line-height: 1;
 }
 

@@ -713,6 +713,22 @@ class OKRTracker {
     }
 
     /**
+     * Format date to show only date part (YYYY-MM-DD)
+     */
+    formatDateOnly(dateString) {
+        if (!dateString) return '';
+        // If it's already in YYYY-MM-DD format, return as is
+        if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+            return dateString;
+        }
+        // If it's an ISO string with time, extract just the date part
+        if (dateString.includes('T')) {
+            return dateString.split('T')[0];
+        }
+        return dateString;
+    }
+
+    /**
      * Get status label from status value
      */
     getStatusLabel(status) {
@@ -754,6 +770,7 @@ class OKRTracker {
                                 <span class="okr-obj-badge okr-obj-group-${(obj.group || 'Personal').toLowerCase()}">${obj.group || 'Personal'}</span>
                                 <span class="okr-obj-badge">${obj.year || ''} Q${obj.quarter || ''}</span>
                                 <span class="okr-obj-badge">${obj.weight || 100}%</span>
+                                ${(obj.created || obj.createdAt) ? `<span class="okr-obj-badge">Created: ${this.formatDateOnly(obj.created || obj.createdAt)}</span>` : ''}
                                 ${obj.startDate ? `<span class="okr-obj-badge">Start: ${obj.startDate}</span>` : ''}
                                 ${obj.targetDate ? `<span class="okr-obj-badge">Due: ${obj.targetDate}</span>` : ''}
                                 ${obj.lastCheckin ? `<span class="okr-obj-badge">Last Check-in: ${obj.lastCheckin}</span>` : ''}
@@ -786,15 +803,19 @@ class OKRTracker {
                                 ${obj.keyResults.map(kr => {
                                     const krProgress = Math.min(100, Math.round((kr.current / kr.target) * 100));
                                     return `
-                                        <div class="okr-kr-item" data-kr-id="${kr.id}">
+                                        <div class="okr-kr-item okr-kr-border-${kr.status || 'on-track'}" data-kr-id="${kr.id}">
                                             <div class="okr-kr-info">
                                                 <div class="okr-kr-title-row">
                                                     <div class="okr-kr-title">${this.escapeHtml(kr.title)}</div>
-                                                    <span class="okr-kr-status-badge okr-kr-status-${kr.status || 'on-track'}">${this.getStatusLabel(kr.status || 'on-track')}</span>
                                                 </div>
-                                                ${kr.startDate && kr.targetDate ? `<div class="okr-kr-dates-display">Start: ${kr.startDate} → Target: ${kr.targetDate}</div>` : ''}
-                                                ${kr.lastCheckin ? `<div class="okr-kr-dates-display">Last Check-in: ${kr.lastCheckin}</div>` : ''}
-                                                <span class="okr-kr-weight-badge">Weight: ${kr.weight || 100}%</span>
+                                                <div class="okr-kr-meta-row">
+                                                    <span class="okr-kr-meta-item okr-kr-status-badge okr-kr-status-${kr.status || 'on-track'}">${this.getStatusLabel(kr.status || 'on-track')}</span>
+                                                    <span class="okr-kr-meta-item okr-kr-weight-badge">Weight: ${kr.weight || 100}%</span>
+                                                    ${(kr.created || kr.createdAt) ? `<span class="okr-kr-meta-item">Created: ${this.formatDateOnly(kr.created || kr.createdAt)}</span>` : ''}
+                                                    ${kr.startDate ? `<span class="okr-kr-meta-item">Start: ${kr.startDate}</span>` : ''}
+                                                    ${kr.targetDate ? `<span class="okr-kr-meta-item">Target: ${kr.targetDate}</span>` : ''}
+                                                    ${kr.lastCheckin ? `<span class="okr-kr-meta-item">Last Check-in: ${kr.lastCheckin}</span>` : ''}
+                                                </div>
                                                 <div class="okr-kr-progress-row">
                                                     <div class="okr-kr-progress-bar">
                                                         <div class="okr-kr-progress-fill" style="width: ${krProgress}%"></div>
@@ -980,12 +1001,13 @@ class OKRTracker {
             }
         } else {
             // Add new objective
+            const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
             this.data.objectives.push({
                 id: this.generateId(),
                 ...formData,
                 weight: 0, // Will be balanced
                 keyResults: [],
-                createdAt: new Date().toISOString()
+                created: today
             });
             // Auto-balance all objective weights
             this.autoBalanceObjectiveWeights();
@@ -1098,6 +1120,7 @@ class OKRTracker {
             }
         } else {
             // Add new key result
+            const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
             objective.keyResults.push({
                 id: this.generateId(),
                 title: title,
@@ -1108,7 +1131,7 @@ class OKRTracker {
                 weight: 0, // Will be balanced
                 status: status,
                 lastCheckin: lastCheckin,
-                createdAt: new Date().toISOString()
+                created: today
             });
             // Auto-balance all KR weights for this objective
             this.autoBalanceKRWeights(objectiveId);
@@ -1181,13 +1204,15 @@ class OKRTracker {
             const progress = this.calculateProgress(obj);
             text += `OBJECTIVE ${index + 1}\n`;
             text += '─'.repeat(40) + '\n';
-            text += `Group:       ${obj.group || 'Personal'}\n`;
-            text += `Period:      ${obj.year || ''} Q${obj.quarter || ''}\n`;
-            text += `Weight:      ${obj.weight || 100}%\n`;
-            text += `Start Date:  ${obj.startDate || 'N/A'}\n`;
-            text += `Due Date:    ${obj.targetDate || 'N/A'}\n`;
-            text += `Last Check-in: ${obj.lastCheckin || 'N/A'}\n`;
-            text += `Progress:    ${progress}%\n\n`;
+            text += `     ${'Group:'.padEnd(15)} ${obj.group || 'Personal'}\n`;
+            text += `     ${'Period:'.padEnd(15)} ${obj.year || ''} Q${obj.quarter || ''}\n`;
+            text += `     ${'Weight:'.padEnd(15)} ${obj.weight || 100}%\n`;
+            const createdDate = obj.created || obj.createdAt;
+            text += `     ${'Created:'.padEnd(15)} ${createdDate ? this.formatDateOnly(createdDate) : 'N/A'}\n`;
+            text += `     ${'Start Date:'.padEnd(15)} ${obj.startDate || 'N/A'}\n`;
+            text += `     ${'Due Date:'.padEnd(15)} ${obj.targetDate || 'N/A'}\n`;
+            text += `     ${'Last Check-in:'.padEnd(15)} ${obj.lastCheckin || 'N/A'}\n`;
+            text += `     ${'Progress:'.padEnd(15)} ${progress}%\n\n`;
             text += `Title:\n${obj.title}\n`;
             if (obj.purpose) {
                 text += `\nPurpose:\n${obj.purpose}\n`;
@@ -1198,11 +1223,13 @@ class OKRTracker {
                 obj.keyResults.forEach((kr, krIndex) => {
                     const krProgress = Math.min(100, Math.round((kr.current / kr.target) * 100));
                     text += `\n  ${krIndex + 1}. ${kr.title}\n`;
-                    text += `     Progress: ${kr.current}/${kr.target} (${krProgress}%)\n`;
-                    text += `     Status:   ${this.getStatusLabel(kr.status || 'on-track')}\n`;
-                    text += `     Last Check-in: ${kr.lastCheckin || 'N/A'}\n`;
+                    text += `     ${'Progress:'.padEnd(15)} ${kr.current}/${kr.target} (${krProgress}%)\n`;
+                    text += `     ${'Status:'.padEnd(15)} ${this.getStatusLabel(kr.status || 'on-track')}\n`;
+                    const krCreatedDate = kr.created || kr.createdAt;
+                    text += `     ${'Created:'.padEnd(15)} ${krCreatedDate ? this.formatDateOnly(krCreatedDate) : 'N/A'}\n`;
+                    text += `     ${'Last Check-in:'.padEnd(15)} ${kr.lastCheckin || 'N/A'}\n`;
                     if (kr.startDate && kr.targetDate) {
-                        text += `     Period: ${kr.startDate} → ${kr.targetDate}\n`;
+                        text += `     ${'Period:'.padEnd(15)} ${kr.startDate} >> ${kr.targetDate}\n`;
                     }
                 });
             }
