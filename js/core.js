@@ -113,21 +113,25 @@ class JINRAFramework {
         // Update module menu
         this.updateModuleMenu(this.settings.enabledModules);
         
-        container.innerHTML = '<div class="loading">Loading modules...</div>';
+        container.innerHTML = '<div class="loading">Select a module from the menu to get started</div>';
 
         for (const moduleName of this.settings.enabledModules) {
             try {
                 await this.loadModule(moduleName);
+                // Hide buttons initially - they'll show when module is activated
+                const moduleInstance = this.modules.get(moduleName);
+                if (moduleInstance && moduleInstance.toggleMenuButtons) {
+                    moduleInstance.toggleMenuButtons(false);
+                }
             } catch (error) {
                 console.error(`Error loading module ${moduleName}:`, error);
                 this.showError(`Failed to load module: ${moduleName}`);
             }
         }
 
-        // Update container if no modules were successfully loaded
-        if (container.children.length === 0 || 
-            (container.children.length === 1 && container.children[0].classList.contains('loading'))) {
-            container.innerHTML = '<div class="loading">No modules available.</div>';
+        // Clear loading message if modules were loaded
+        if (this.modules.size > 0 && container.querySelector('.loading')) {
+            container.innerHTML = '<div class="loading">Select a module from the menu to get started</div>';
         }
     }
 
@@ -151,13 +155,11 @@ class JINRAFramework {
             const moduleItem = document.createElement('div');
             moduleItem.className = 'module-menu-item';
             moduleItem.textContent = moduleName;
+            moduleItem.dataset.moduleName = moduleName;
             
-            // Add click handler to scroll to module in main window
+            // Add click handler to load/activate module in main window
             moduleItem.addEventListener('click', () => {
-                const moduleElement = document.getElementById(`module-${moduleName}`);
-                if (moduleElement) {
-                    moduleElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
+                this.activateModule(moduleName);
             });
             
             menuContent.appendChild(moduleItem);
@@ -165,32 +167,95 @@ class JINRAFramework {
     }
 
     /**
+     * Activate a module (load it in the main window)
+     */
+    activateModule(moduleName) {
+        // Hide all module buttons first
+        this.modules.forEach((instance, name) => {
+            if (instance.toggleMenuButtons) {
+                instance.toggleMenuButtons(false);
+            }
+        });
+        
+        const moduleInstance = this.modules.get(moduleName);
+        if (moduleInstance) {
+            // Clear main window
+            const container = document.getElementById('modules-container');
+            container.innerHTML = '';
+            
+            // If module has an open/activate method, use it
+            if (moduleInstance.open || moduleInstance.activate) {
+                if (moduleInstance.open) {
+                    moduleInstance.open();
+                } else {
+                    moduleInstance.activate();
+                }
+            } else if (moduleInstance.render) {
+                // Otherwise, just render it
+                container.innerHTML = `
+                    <div class="module" id="module-${moduleName}">
+                        <div class="module-header">${moduleInstance.name || moduleName}</div>
+                        <div class="module-content">${moduleInstance.render()}</div>
+                    </div>
+                `;
+                // Show buttons if module is now active
+                if (moduleInstance.toggleMenuButtons) {
+                    moduleInstance.toggleMenuButtons(true);
+                }
+            }
+            
+            // Update active state in menu
+            document.querySelectorAll('.module-menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            const activeItem = document.querySelector(`[data-module-name="${moduleName}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+        }
+    }
+
+    /**
      * Load a single module
      */
     async loadModule(moduleName) {
         try {
+            // Try to load module CSS if it exists
+            try {
+                await this.loadStylesheet(`modules/${moduleName}/${moduleName}.css`);
+            } catch (e) {
+                // CSS file is optional, so we ignore errors
+                console.log(`No CSS file found for module ${moduleName}`);
+            }
+            
             // Load module script
             const moduleScript = await this.loadScript(`modules/${moduleName}/${moduleName}.js`);
             
+            // Handle module names with hyphens (e.g., "okr-tracker" -> window['okr-tracker'])
+            const moduleExport = window[moduleName] || window[moduleName.replace(/-/g, '')];
+            
             // Check if module has an init function
-            if (typeof window[moduleName] === 'function' || 
-                (window[moduleName] && typeof window[moduleName].init === 'function')) {
+            if (typeof moduleExport === 'function' || 
+                (moduleExport && typeof moduleExport.init === 'function')) {
                 
-                const moduleInstance = typeof window[moduleName] === 'function' 
-                    ? new window[moduleName]() 
-                    : window[moduleName];
+                const moduleInstance = typeof moduleExport === 'function' 
+                    ? new moduleExport() 
+                    : moduleExport;
                 
                 if (moduleInstance.init) {
                     await moduleInstance.init();
                 }
                 
-                // Render module
-                this.renderModule(moduleName, moduleInstance);
+                // Store module instance (don't render yet - wait for activation)
                 this.modules.set(moduleName, moduleInstance);
                 
                 // Allow module to register menu bar buttons if it has the method
                 if (moduleInstance.registerMenuButton) {
                     moduleInstance.registerMenuButton();
+                    // Hide buttons initially
+                    if (moduleInstance.toggleMenuButtons) {
+                        moduleInstance.toggleMenuButtons(false);
+                    }
                 }
                 
                 console.log(`Module loaded: ${moduleName}`);
@@ -201,6 +266,27 @@ class JINRAFramework {
             console.error(`Error loading module ${moduleName}:`, error);
             throw error;
         }
+    }
+
+    /**
+     * Load a stylesheet dynamically
+     */
+    loadStylesheet(href) {
+        return new Promise((resolve, reject) => {
+            // Check if stylesheet already exists
+            const existing = document.querySelector(`link[href="${href}"]`);
+            if (existing) {
+                resolve();
+                return;
+            }
+            
+            const link = document.createElement('link');
+            link.rel = 'stylesheet';
+            link.href = href;
+            link.onload = resolve;
+            link.onerror = () => reject(new Error(`Failed to load stylesheet: ${href}`));
+            document.head.appendChild(link);
+        });
     }
 
     /**

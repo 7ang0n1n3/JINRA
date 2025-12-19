@@ -41,11 +41,41 @@ class ExampleModule {
         const button = document.createElement('button');
         button.className = 'menu-bar-button';
         button.textContent = 'Example Action';
+        button.id = 'example-menu-action';
+        button.style.display = 'none'; // Hidden until module is active
         button.addEventListener('click', () => {
             this.changeMainWindow();
         });
         
         menuContent.appendChild(button);
+    }
+
+    /**
+     * Show/hide menu bar buttons
+     */
+    toggleMenuButtons(show) {
+        const btn = document.getElementById('example-menu-action');
+        if (btn) {
+            btn.style.display = show ? 'block' : 'none';
+        }
+    }
+
+    /**
+     * Open/Activate the example module
+     */
+    open() {
+        this.activate();
+    }
+
+    activate() {
+        const mainWindow = document.getElementById('modules-container');
+        mainWindow.innerHTML = `
+            <div class="module" id="module-example">
+                <div class="module-header">${this.name}</div>
+                <div class="module-content">${this.render()}</div>
+            </div>
+        `;
+        this.toggleMenuButtons(true); // Show menu bar button
     }
 
     /**

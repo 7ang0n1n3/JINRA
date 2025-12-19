@@ -58,3 +58,9 @@
     transform: translateX(3px);
 }
 
+.module-menu-item.active {
+    background: rgba(102, 126, 234, 0.4);
+    border-color: rgba(102, 126, 234, 0.7);
+    font-weight: 600;
+}
+

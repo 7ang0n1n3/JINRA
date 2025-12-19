@@ -1,0 +1,595 @@
+/**
+ * OKR Tracker Module Styles
+ * Based on the original okr-tracker project styles
+ */
+
+.okr-tracker-container {
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.okr-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.okr-header h2 {
+    font-size: 2em;
+    margin-bottom: 10px;
+    color: #667eea;
+}
+
+.okr-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 1.1em;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.okr-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.okr-btn, .okr-btn-primary {
+    padding: 10px 20px;
+    background: rgba(102, 126, 234, 0.3);
+    border: 2px solid rgba(102, 126, 234, 0.6);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.9em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.okr-btn-primary {
+    background: rgba(102, 126, 234, 0.5);
+}
+
+.okr-btn:hover, .okr-btn-primary:hover {
+    background: rgba(102, 126, 234, 0.6);
+    border-color: rgba(102, 126, 234, 0.8);
+    transform: translateY(-1px);
+}
+
+/* Dashboard Charts */
+.okr-dashboard-charts {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.okr-chart-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+}
+
+.okr-progress-ring {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.okr-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 8;
+}
+
+.okr-ring-progress {
+    fill: none;
+    stroke-width: 8;
+    stroke-linecap: round;
+    stroke-dasharray: 326.73;
+    stroke-dashoffset: 326.73;
+    transition: stroke-dashoffset 0.5s ease;
+}
+
+.okr-ring-personal {
+    stroke: #10b981;
+}
+
+.okr-ring-team {
+    stroke: #eab308;
+}
+
+.okr-ring-company {
+    stroke: #3b82f6;
+}
+
+.okr-chart-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
+.okr-chart-count {
+    display: block;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+}
+
+.okr-chart-label {
+    display: block;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+.okr-chart-percent {
+    position: absolute;
+    bottom: -1.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.okr-objectives-list h3 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 20px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+#okr-objectives-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.okr-objective-card {
+    background: rgba(40, 40, 40, 0.8);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.okr-objective-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.okr-objective-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.okr-objective-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.okr-obj-badge {
+    font-size: 0.75rem;
+    padding: 6px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-weight: 500;
+    background: rgba(30, 30, 30, 0.8);
+    color: white;
+    text-align: center;
+    line-height: 1.4;
+}
+
+.okr-obj-group-personal {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.okr-obj-group-team {
+    background: #eab308;
+    border-color: #eab308;
+    color: black;
+}
+
+.okr-obj-group-company {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+.okr-objective-content-box {
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    background: rgba(20, 20, 20, 0.6);
+    margin-top: 10px;
+}
+
+.okr-box-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.okr-objective-title {
+    font-size: 1rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.okr-objective-purpose {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: pre-wrap;
+    margin: 0;
+}
+
+.okr-objective-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.okr-btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: rgba(40, 40, 40, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.okr-btn-icon:hover {
+    background: rgba(60, 60, 60, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.okr-btn-delete:hover {
+    background: #dc2626;
+    border-color: #dc2626;
+}
+
+.okr-objective-progress {
+    margin: 15px 0;
+}
+
+.okr-progress-bar {
+    height: 8px;
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.okr-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #10b981);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.okr-progress-text {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 8px;
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.okr-key-results {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.okr-key-results h4 {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.okr-kr-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.okr-kr-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    background: rgba(30, 30, 30, 0.6);
+    border-radius: 10px;
+}
+
+.okr-kr-info {
+    flex: 1;
+}
+
+.okr-kr-title {
+    font-size: 0.95rem;
+    margin-bottom: 6px;
+    white-space: pre-wrap;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.okr-kr-dates-display {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    margin-bottom: 6px;
+}
+
+.okr-kr-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.okr-kr-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.okr-kr-progress-fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.okr-kr-value {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    min-width: 60px;
+    text-align: right;
+}
+
+.okr-kr-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.okr-kr-controls button {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    font-size: 0.875rem;
+    background: rgba(40, 40, 40, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.okr-kr-controls button:hover {
+    background: rgba(60, 60, 60, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+}
+
+.okr-btn-delete-kr:hover {
+    background: #dc2626 !important;
+    border-color: #dc2626 !important;
+}
+
+.okr-kr-weight-badge {
+    font-size: 0.7rem;
+    background: #667eea;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
+/* Modals */
+.okr-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.okr-modal.active {
+    display: flex;
+}
+
+.okr-modal-content {
+    background: rgba(30, 30, 30, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 30px;
+    width: 90%;
+    max-width: 400px;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+.okr-modal-wide {
+    max-width: 700px;
+}
+
+.okr-modal-help {
+    max-width: 600px;
+}
+
+.okr-modal-content h3 {
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+    color: white;
+}
+
+.okr-close {
+    float: right;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.6);
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.okr-close:hover {
+    color: white;
+}
+
+.okr-help-content {
+    color: rgba(255, 255, 255, 0.7);
+    line-height: 1.6;
+}
+
+.okr-help-content h4 {
+    color: white;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1rem;
+}
+
+.okr-help-content p {
+    margin-bottom: 12px;
+}
+
+.okr-help-content ul {
+    margin: 8px 0 12px 20px;
+}
+
+.okr-help-content li {
+    margin-bottom: 6px;
+}
+
+.okr-form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.okr-form-field label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.okr-form-row {
+    display: flex;
+    gap: 15px;
+}
+
+.okr-form-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.okr-form-field select,
+.okr-form-field input[type="text"],
+.okr-form-field input[type="number"],
+.okr-form-field input[type="date"],
+.okr-form-field textarea {
+    padding: 10px 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(20, 20, 20, 0.6);
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+.okr-form-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.okr-form-field select:focus,
+.okr-form-field input:focus,
+.okr-form-field textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.okr-kr-target {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.okr-kr-target label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.okr-kr-target input {
+    width: 100px;
+}
+
+.okr-kr-dates {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.okr-kr-date-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.okr-kr-date-field label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.okr-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.okr-empty-state span {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 15px;
+}
+
+#okr-objective-form button,
+#okr-kr-form button {
+    width: 100%;
+    margin-top: 10px;
+}
+
