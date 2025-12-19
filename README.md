@@ -1,5 +1,5 @@
 # JINRA
-Command and control web app framework
+Command Center web app framework
 
 A fully offline, modular framework built with HTML, CSS, and JavaScript. Functions and features can be added or removed via a settings file.
 
