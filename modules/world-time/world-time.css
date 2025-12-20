@@ -1,0 +1,60 @@
+/**
+ * World Time Module Styles
+ */
+
+.world-time-container {
+    padding: 20px;
+    color: white;
+}
+
+.world-time-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.world-time-card {
+    background: rgba(30, 30, 30, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.world-time-card:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(40, 40, 40, 0.7);
+    transform: translateY(-2px);
+}
+
+.world-time-city {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.world-time-time {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #667eea;
+    margin-bottom: 8px;
+    font-family: 'Courier New', monospace;
+}
+
+.world-time-date {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 6px;
+}
+
+.world-time-offset {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.4);
+    font-family: 'Courier New', monospace;
+}
+
