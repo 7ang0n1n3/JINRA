@@ -3,22 +3,22 @@
  */
 
 .world-time-container {
-    padding: 20px;
+    padding: 15px;
     color: white;
 }
 
 .world-time-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 15px;
-    margin-top: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+    margin-top: 10px;
 }
 
 .world-time-card {
     background: rgba(30, 30, 30, 0.6);
     border: 2px solid rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 20px;
+    border-radius: 10px;
+    padding: 12px;
     text-align: center;
     transition: all 0.3s ease;
 }
@@ -30,30 +30,31 @@
 }
 
 .world-time-city {
-    font-size: 1.1rem;
+    font-size: 0.85rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
-    margin-bottom: 10px;
+    margin-bottom: 6px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .world-time-time {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
     font-weight: 700;
     color: #667eea;
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     font-family: 'Courier New', monospace;
+    line-height: 1.2;
 }
 
 .world-time-date {
-    font-size: 0.9rem;
+    font-size: 0.75rem;
     color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 .world-time-offset {
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     color: rgba(255, 255, 255, 0.4);
     font-family: 'Courier New', monospace;
 }

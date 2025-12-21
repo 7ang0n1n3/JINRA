@@ -13,6 +13,47 @@ A fully offline, modular framework built with HTML, CSS, and JavaScript. Functio
   - Example: `modules/example/example.js`
 - **`styles/`** - CSS stylesheets for the main framework
 
+## Available Modules
+
+### Example (`example`)
+A template module demonstrating basic module structure and functionality. Useful as a starting point for creating new modules.
+
+### OKR Tracker (`okr-tracker`)
+Track Objectives and Key Results (OKRs) with:
+- Create and manage objectives with weights
+- Add key results to objectives with auto-balancing weights
+- Status tracking (On Track / Off Track / At Risk) with color-coded indicators
+- Progress tracking with visual progress bars
+- Date tracking (Created, Start Date, Target Date, Last Check-in)
+- Export reports to text files
+- Save/load data using File System Access API or localStorage
+
+### Timer (`timer`)
+Multiple timer and countdown functionality:
+- Create unlimited timers (stopwatch style)
+- Create unlimited countdown timers with HH:MM:SS format
+- Start/stop/reset controls for each timer
+- Visual feedback (blinking) when countdown reaches zero
+- Persistent timers that continue running when switching modules
+- Add custom names to timers and countdowns
+- Delete individual timers/countdowns
+
+### Weekly Update (`weekly-update`)
+Create and export weekly updates in a structured text format:
+- Multiple sections with date and region
+- Multiple entries per section with county, process, title, and content
+- Tab-based interface for sections and entries
+- Auto-save to browser storage
+- Export to formatted text files with proper alignment
+- Reset form functionality
+
+### World Time (`world-time`)
+Display current time in multiple time zones:
+- Real-time clock updates
+- Shows date, time, and UTC offset for each timezone
+- Compact, card-based layout
+- Pre-configured with major world cities
+
 ## Usage
 
 1. **Enable/Disable Modules**: Edit `data/settings.js` and add module names to the `enabledModules` array

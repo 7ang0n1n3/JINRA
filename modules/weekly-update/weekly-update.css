@@ -1,0 +1,410 @@
+/**
+ * Weekly Update Module Styles
+ */
+
+.weekly-update-container {
+    padding: 20px;
+    color: white;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Tabs */
+.wu-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0;
+    overflow-x: auto;
+}
+
+.wu-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(30, 30, 30, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    position: relative;
+}
+
+.wu-tab:hover {
+    background: rgba(40, 40, 40, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.wu-tab.active {
+    background: rgba(30, 30, 30, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    font-weight: 600;
+}
+
+.wu-tab-remove {
+    background: rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    border-radius: 4px;
+    color: #ef4444;
+    font-size: 1rem;
+    font-weight: 700;
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+    margin-left: 4px;
+}
+
+.wu-tab-remove:hover {
+    background: rgba(239, 68, 68, 0.5);
+    border-color: #ef4444;
+    transform: scale(1.1);
+}
+
+.wu-form-section {
+    background: rgba(30, 30, 30, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.wu-form-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.wu-form-row:last-child {
+    margin-bottom: 0;
+}
+
+.wu-form-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wu-form-field label {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wu-form-field input[type="date"],
+.wu-form-field input[type="text"],
+.wu-form-field select {
+    padding: 10px 15px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.wu-form-field input[type="date"]:focus,
+.wu-form-field input[type="text"]:focus,
+.wu-form-field select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.wu-form-field select {
+    cursor: pointer;
+}
+
+.wu-form-field select option {
+    background: rgba(30, 30, 30, 0.95);
+    color: white;
+}
+
+/* Date input styling */
+.wu-form-field input[type="date"] {
+    color: white;
+    color-scheme: dark;
+}
+
+.wu-form-field input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5) contrast(1.2);
+    cursor: pointer;
+    opacity: 1 !important;
+    width: 20px;
+    height: 20px;
+    padding: 2px;
+    background: transparent;
+}
+
+.wu-entries-section {
+    margin-bottom: 20px;
+}
+
+/* Entry Tabs */
+.wu-entry-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 0;
+    overflow-x: auto;
+}
+
+.wu-entry-tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    background: rgba(30, 30, 30, 0.4);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-bottom: none;
+    border-radius: 6px 6px 0 0;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: nowrap;
+    position: relative;
+}
+
+.wu-entry-tab:hover {
+    background: rgba(40, 40, 40, 0.6);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.wu-entry-tab.active {
+    background: rgba(30, 30, 30, 0.8);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: white;
+    font-weight: 600;
+}
+
+.wu-entry-tab-remove {
+    background: rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    border-radius: 4px;
+    color: #ef4444;
+    font-size: 0.9rem;
+    font-weight: 700;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+    margin-left: 4px;
+}
+
+.wu-entry-tab-remove:hover {
+    background: rgba(239, 68, 68, 0.5);
+    border-color: #ef4444;
+    transform: scale(1.1);
+}
+
+.wu-entry-content {
+    margin-top: 0;
+}
+
+.wu-entries-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.wu-entries-header h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.wu-btn-add {
+    padding: 8px 16px;
+    background: #10b981;
+    border: 1px solid #10b981;
+    border-radius: 6px;
+    color: white;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.wu-btn-add:hover {
+    background: #059669;
+    border-color: #059669;
+    transform: translateY(-1px);
+}
+
+.wu-entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.wu-entry-card {
+    background: rgba(30, 30, 30, 0.6);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 15px;
+    transition: all 0.3s ease;
+}
+
+.wu-entry-card:hover {
+    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(40, 40, 40, 0.7);
+}
+
+.wu-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.wu-entry-number {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wu-btn-remove {
+    background: rgba(239, 68, 68, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.5);
+    border-radius: 4px;
+    color: #ef4444;
+    font-size: 1.2rem;
+    font-weight: 700;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    line-height: 1;
+}
+
+.wu-btn-remove:hover {
+    background: rgba(239, 68, 68, 0.5);
+    border-color: #ef4444;
+    transform: scale(1.1);
+}
+
+.wu-entry-field {
+    margin-bottom: 12px;
+}
+
+.wu-entry-field:last-child {
+    margin-bottom: 0;
+}
+
+.wu-entry-field label {
+    display: block;
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 6px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wu-title-input {
+    width: 100%;
+    padding: 8px 12px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    font-size: 0.95rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: all 0.2s;
+}
+
+.wu-title-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.wu-content-input {
+    width: 100%;
+    padding: 10px 12px;
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    font-size: 0.9rem;
+    font-family: inherit;
+    box-sizing: border-box;
+    resize: vertical;
+    transition: all 0.2s;
+    line-height: 1.5;
+}
+
+.wu-content-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.wu-content-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.wu-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.wu-btn-export {
+    padding: 12px 24px;
+    background: #667eea;
+    border: 1px solid #667eea;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wu-btn-export:hover {
+    background: #5568d3;
+    border-color: #5568d3;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
