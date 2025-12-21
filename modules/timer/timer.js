@@ -7,17 +7,11 @@ class Timer {
     constructor() {
         this.name = 'Timer';
         this.description = 'Multiple timers with start/stop controls';
-        this.timers = [
-            { id: 1, elapsed: 0, running: false, interval: null, note: '' },
-            { id: 2, elapsed: 0, running: false, interval: null, note: '' },
-            { id: 3, elapsed: 0, running: false, interval: null, note: '' }
-        ];
-        this.startTime = [null, null, null];
-        this.countdownTimers = [
-            { id: 1, hours: 0, minutes: 0, seconds: 0, remaining: 0, running: false, interval: null, note: '', ended: false, blinkInterval: null },
-            { id: 2, hours: 0, minutes: 0, seconds: 0, remaining: 0, running: false, interval: null, note: '', ended: false, blinkInterval: null },
-            { id: 3, hours: 0, minutes: 0, seconds: 0, remaining: 0, running: false, interval: null, note: '', ended: false, blinkInterval: null }
-        ];
+        this.timers = [];
+        this.startTime = {};
+        this.countdownTimers = [];
+        this.nextTimerId = 1;
+        this.nextCountdownId = 1;
     }
 
     /**
@@ -28,13 +22,200 @@ class Timer {
         // Load saved timers from localStorage
         this.loadTimers();
         this.loadCountdownTimers();
+        // Register menu bar buttons
+        this.registerMenuButtons();
+    }
+
+    /**
+     * Register menu bar buttons
+     */
+    registerMenuButton() {
+        this.registerMenuButtons();
+    }
+
+    registerMenuButtons() {
+        const menuBar = document.getElementById('menu-bar');
+        if (!menuBar) return;
+        
+        const menuContent = menuBar.querySelector('.menu-bar-content');
+        if (!menuContent) return;
+        
+        // Setup menu bar container if not already done
+        if (!menuContent.classList.contains('menu-bar-container-setup')) {
+            menuContent.innerHTML = '';
+            menuContent.classList.add('menu-bar-container-setup');
+            menuContent.style.display = 'flex';
+            menuContent.style.gap = '10px';
+            menuContent.style.alignItems = 'center';
+            menuContent.style.justifyContent = 'flex-start';
+            menuContent.style.padding = '0 20px';
+        }
+
+        // Remove existing buttons if they exist (to avoid duplicates)
+        const existingTimerBtn = document.getElementById('timer-create-timer-btn');
+        const existingCountdownBtn = document.getElementById('timer-create-countdown-btn');
+        if (existingTimerBtn && existingTimerBtn.parentNode) {
+            existingTimerBtn.parentNode.removeChild(existingTimerBtn);
+        }
+        if (existingCountdownBtn && existingCountdownBtn.parentNode) {
+            existingCountdownBtn.parentNode.removeChild(existingCountdownBtn);
+        }
+
+        // Create "Create New Timer" button
+        const createTimerBtn = document.createElement('button');
+        createTimerBtn.id = 'timer-create-timer-btn';
+        createTimerBtn.className = 'menu-bar-button';
+        createTimerBtn.textContent = 'Create New Timer';
+        createTimerBtn.style.display = 'none';
+        createTimerBtn.addEventListener('click', () => {
+            this.createNewTimer();
+        });
+        menuContent.appendChild(createTimerBtn);
+
+        // Create "Create New Countdown" button
+        const createCountdownBtn = document.createElement('button');
+        createCountdownBtn.id = 'timer-create-countdown-btn';
+        createCountdownBtn.className = 'menu-bar-button';
+        createCountdownBtn.textContent = 'Create New Countdown';
+        createCountdownBtn.style.display = 'none';
+        createCountdownBtn.addEventListener('click', () => {
+            this.createNewCountdown();
+        });
+        menuContent.appendChild(createCountdownBtn);
     }
 
     /**
      * Show/hide menu bar buttons
      */
     toggleMenuButtons(show) {
-        // No menu buttons for this module
+        // Make sure buttons are registered first
+        this.registerMenuButtons();
+        
+        const createTimerBtn = document.getElementById('timer-create-timer-btn');
+        const createCountdownBtn = document.getElementById('timer-create-countdown-btn');
+        
+        if (createTimerBtn) {
+            createTimerBtn.style.display = show ? 'inline-block' : 'none';
+        }
+        if (createCountdownBtn) {
+            createCountdownBtn.style.display = show ? 'inline-block' : 'none';
+        }
+    }
+
+    /**
+     * Create a new timer
+     */
+    createNewTimer() {
+        const name = prompt('Enter a name for the new timer:', `Timer ${this.nextTimerId}`);
+        if (name === null) return; // User cancelled
+
+        const timerId = this.nextTimerId++;
+        const newTimer = {
+            id: timerId,
+            name: name || `Timer ${timerId}`,
+            elapsed: 0,
+            running: false,
+            interval: null,
+            note: ''
+        };
+        
+        this.timers.push(newTimer);
+        this.startTime[timerId] = null;
+        this.saveTimers();
+        this.renderAndAttach();
+    }
+
+    /**
+     * Create a new countdown timer
+     */
+    createNewCountdown() {
+        const name = prompt('Enter a name for the new countdown:', `Countdown ${this.nextCountdownId}`);
+        if (name === null) return; // User cancelled
+
+        const countdownId = this.nextCountdownId++;
+        const newCountdown = {
+            id: countdownId,
+            name: name || `Countdown ${countdownId}`,
+            hours: 0,
+            minutes: 0,
+            seconds: 0,
+            remaining: 0,
+            running: false,
+            interval: null,
+            note: '',
+            ended: false,
+            blinkInterval: null
+        };
+        
+        this.countdownTimers.push(newCountdown);
+        this.saveCountdownTimers();
+        this.renderAndAttach();
+    }
+
+    /**
+     * Delete a timer
+     */
+    deleteTimer(timerId) {
+        if (!confirm('Are you sure you want to delete this timer?')) return;
+
+        const timer = this.timers.find(t => t.id === timerId);
+        if (timer && timer.running) {
+            this.stopTimer(timerId);
+        }
+
+        this.timers = this.timers.filter(t => t.id !== timerId);
+        delete this.startTime[timerId];
+        this.saveTimers();
+        this.renderAndAttach();
+    }
+
+    /**
+     * Delete a countdown timer
+     */
+    deleteCountdown(timerId) {
+        if (!confirm('Are you sure you want to delete this countdown?')) return;
+
+        const cdTimer = this.countdownTimers.find(t => t.id === timerId);
+        if (cdTimer) {
+            if (cdTimer.running) {
+                this.stopCountdown(timerId);
+            }
+            if (cdTimer.ended) {
+                this.stopBlinking(timerId);
+            }
+        }
+
+        this.countdownTimers = this.countdownTimers.filter(t => t.id !== timerId);
+        this.saveCountdownTimers();
+        this.renderAndAttach();
+    }
+
+    /**
+     * Render and attach event listeners
+     */
+    renderAndAttach() {
+        const mainWindow = document.getElementById('modules-container');
+        const moduleContent = mainWindow.querySelector('.module-content');
+        if (moduleContent) {
+            // Set global reference for onclick handlers
+            window.timer = this;
+            moduleContent.innerHTML = this.render();
+            this.attachEventListeners();
+            this.updateDisplays();
+            
+            // Update all button states
+            this.timers.forEach(timer => {
+                this.updateButtons(timer.id);
+            });
+            
+            this.countdownTimers.forEach(cdTimer => {
+                this.updateCountdownDisplay(cdTimer.id);
+                this.updateCountdownButtons(cdTimer.id);
+                if (cdTimer.ended && cdTimer.remaining === 0) {
+                    this.startBlinking(cdTimer.id);
+                }
+            });
+        }
     }
 
     /**
@@ -52,8 +233,19 @@ class Timer {
                 <div class="module-content">${this.render()}</div>
             </div>
         `;
+        // Set global reference for onclick handlers
+        window.timer = this;
+        // Register and show menu buttons
+        this.registerMenuButtons();
+        this.toggleMenuButtons(true);
         this.attachEventListeners();
         this.updateDisplays();
+        
+        // Update all button states
+        this.timers.forEach(timer => {
+            this.updateButtons(timer.id);
+        });
+        
         this.countdownTimers.forEach(cdTimer => {
             this.updateCountdownDisplay(cdTimer.id);
             this.updateCountdownButtons(cdTimer.id);
@@ -82,11 +274,11 @@ class Timer {
         if (!timer || timer.running) return;
 
         timer.running = true;
-        this.startTime[timerId - 1] = Date.now() - (timer.elapsed * 1000);
+        this.startTime[timerId] = Date.now() - (timer.elapsed * 1000);
 
         timer.interval = setInterval(() => {
             const now = Date.now();
-            timer.elapsed = Math.floor((now - this.startTime[timerId - 1]) / 1000);
+            timer.elapsed = Math.floor((now - this.startTime[timerId]) / 1000);
             this.updateDisplay(timerId);
             this.saveTimers();
         }, 100);
@@ -470,10 +662,12 @@ class Timer {
     saveTimers() {
         const data = this.timers.map(t => ({
             id: t.id,
+            name: t.name,
             elapsed: t.elapsed,
             note: t.note
         }));
         localStorage.setItem('timer-module-data', JSON.stringify(data));
+        localStorage.setItem('timer-next-id', this.nextTimerId.toString());
     }
 
     /**
@@ -481,15 +675,26 @@ class Timer {
      */
     loadTimers() {
         try {
+            const nextId = localStorage.getItem('timer-next-id');
+            if (nextId) {
+                this.nextTimerId = parseInt(nextId, 10);
+            }
+            
             const data = localStorage.getItem('timer-module-data');
             if (data) {
                 const saved = JSON.parse(data);
-                saved.forEach(savedTimer => {
-                    const timer = this.timers.find(t => t.id === savedTimer.id);
-                    if (timer) {
-                        timer.elapsed = savedTimer.elapsed || 0;
-                        timer.note = savedTimer.note || '';
-                    }
+                this.timers = saved.map(savedTimer => ({
+                    id: savedTimer.id,
+                    name: savedTimer.name || `Timer ${savedTimer.id}`,
+                    elapsed: savedTimer.elapsed || 0,
+                    running: false,
+                    interval: null,
+                    note: savedTimer.note || ''
+                }));
+                
+                // Initialize startTime for all loaded timers
+                this.timers.forEach(timer => {
+                    this.startTime[timer.id] = null;
                 });
             }
         } catch (e) {
@@ -503,6 +708,7 @@ class Timer {
     saveCountdownTimers() {
         const data = this.countdownTimers.map(t => ({
             id: t.id,
+            name: t.name,
             hours: t.hours,
             minutes: t.minutes,
             seconds: t.seconds,
@@ -510,6 +716,7 @@ class Timer {
             note: t.note
         }));
         localStorage.setItem('countdown-timer-module-data', JSON.stringify(data));
+        localStorage.setItem('countdown-next-id', this.nextCountdownId.toString());
     }
 
     /**
@@ -517,19 +724,27 @@ class Timer {
      */
     loadCountdownTimers() {
         try {
+            const nextId = localStorage.getItem('countdown-next-id');
+            if (nextId) {
+                this.nextCountdownId = parseInt(nextId, 10);
+            }
+            
             const data = localStorage.getItem('countdown-timer-module-data');
             if (data) {
                 const saved = JSON.parse(data);
-                saved.forEach(savedTimer => {
-                    const cdTimer = this.countdownTimers.find(t => t.id === savedTimer.id);
-                    if (cdTimer) {
-                        cdTimer.hours = savedTimer.hours || 0;
-                        cdTimer.minutes = savedTimer.minutes || 0;
-                        cdTimer.seconds = savedTimer.seconds || 0;
-                        cdTimer.remaining = savedTimer.remaining || (cdTimer.hours * 3600 + cdTimer.minutes * 60 + cdTimer.seconds);
-                        cdTimer.note = savedTimer.note || '';
-                    }
-                });
+                this.countdownTimers = saved.map(savedTimer => ({
+                    id: savedTimer.id,
+                    name: savedTimer.name || `Countdown ${savedTimer.id}`,
+                    hours: savedTimer.hours || 0,
+                    minutes: savedTimer.minutes || 0,
+                    seconds: savedTimer.seconds || 0,
+                    remaining: savedTimer.remaining || (savedTimer.hours * 3600 + savedTimer.minutes * 60 + savedTimer.seconds),
+                    running: false,
+                    interval: null,
+                    note: savedTimer.note || '',
+                    ended: false,
+                    blinkInterval: null
+                }));
             }
         } catch (e) {
             console.error('Error loading countdown timer data:', e);
@@ -546,7 +761,12 @@ class Timer {
                     ${this.timers.map(timer => `
                         <div class="timer-card">
                             <div class="timer-header">
-                                <h3>Timer ${timer.id}</h3>
+                                <h3>${this.escapeHtml(timer.name || `Timer ${timer.id}`)}</h3>
+                                <button 
+                                    class="timer-delete-btn" 
+                                    onclick="window.timer.deleteTimer(${timer.id})"
+                                    title="Delete Timer"
+                                >×</button>
                             </div>
                             <div class="timer-note-section">
                                 <label for="timer-note-${timer.id}">Note:</label>
@@ -582,7 +802,12 @@ class Timer {
                     ${this.countdownTimers.map(cdTimer => `
                         <div class="timer-card countdown-card" data-timer-id="${cdTimer.id}">
                             <div class="timer-header">
-                                <h3>Countdown ${cdTimer.id}</h3>
+                                <h3>${this.escapeHtml(cdTimer.name || `Countdown ${cdTimer.id}`)}</h3>
+                                <button 
+                                    class="timer-delete-btn" 
+                                    onclick="window.timer.deleteCountdown(${cdTimer.id})"
+                                    title="Delete Countdown"
+                                >×</button>
                             </div>
                             <div class="timer-note-section">
                                 <label for="cd-note-${cdTimer.id}">Note:</label>

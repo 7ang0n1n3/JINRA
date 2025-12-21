@@ -4,7 +4,7 @@
  */
 
 window.JINRASettings = {
-  "enabledModules": ["okr-tracker", "world-time", "timer"],
+  "enabledModules": ["world-time", "okr-tracker", "timer"],
   "enabledLibraries": []
 };
 
