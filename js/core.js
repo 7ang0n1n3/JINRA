@@ -72,22 +72,34 @@ class JINRAFramework {
             return;
         }
 
-        for (const libName of this.settings.enabledLibraries) {
-            try {
+        const loadPromises = this.settings.enabledLibraries.map(libName => {
+            return new Promise((resolve, reject) => {
+                // Check if script already exists
+                const existing = document.querySelector(`script[src="libs/${libName}.js"]`);
+                if (existing) {
+                    console.log(`Library already loaded: ${libName}`);
+                    this.libraries.set(libName, true);
+                    resolve();
+                    return;
+                }
+
                 const script = document.createElement('script');
                 script.src = `libs/${libName}.js`;
                 script.onload = () => {
                     console.log(`Library loaded: ${libName}`);
                     this.libraries.set(libName, true);
+                    resolve();
                 };
                 script.onerror = () => {
                     console.error(`Failed to load library: ${libName}`);
+                    reject(new Error(`Failed to load library: ${libName}`));
                 };
                 document.head.appendChild(script);
-            } catch (error) {
-                console.error(`Error loading library ${libName}:`, error);
-            }
-        }
+            });
+        });
+
+        // Wait for all libraries to load (or fail)
+        await Promise.allSettled(loadPromises);
     }
 
     /**
@@ -102,7 +114,7 @@ class JINRAFramework {
         
         if (!this.settings || !this.settings.enabledModules || this.settings.enabledModules.length === 0) {
             console.warn('No modules enabled in settings');
-            container.innerHTML = '<div class="loading">No modules enabled. Edit data/settings.json to enable modules.</div>';
+            container.innerHTML = '<div class="loading">No modules enabled. Edit data/settings.js to enable modules.</div>';
             const menuContent = moduleMenu.querySelector('.module-menu-content');
             if (menuContent) {
                 menuContent.textContent = 'No modules';
@@ -197,6 +209,10 @@ class JINRAFramework {
                 } else {
                     moduleInstance.activate();
                 }
+                // Show buttons after activation
+                if (moduleInstance.toggleMenuButtons) {
+                    moduleInstance.toggleMenuButtons(true);
+                }
             } else if (moduleInstance.render) {
                 // Otherwise, just render it
                 container.innerHTML = `
@@ -239,7 +255,15 @@ class JINRAFramework {
             const moduleScript = await this.loadScript(`modules/${moduleName}/${moduleName}.js`);
             
             // Handle module names with hyphens (e.g., "okr-tracker" -> window['okr-tracker'])
-            const moduleExport = window[moduleName] || window[moduleName.replace(/-/g, '')];
+            // Try bracket notation first (handles hyphens), then try without hyphens, then camelCase
+            const hyphenRemoved = moduleName.replace(/-/g, '');
+            const camelCase = moduleName.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+            const moduleExport = window[moduleName] || window[hyphenRemoved] || window[camelCase];
+            
+            // Check if module export was found and is valid
+            if (!moduleExport) {
+                throw new Error(`Module ${moduleName} did not export itself to window. Expected window['${moduleName}'], window.${hyphenRemoved}, or window.${camelCase}`);
+            }
             
             // Check if module has an init function
             if (typeof moduleExport === 'function' || 

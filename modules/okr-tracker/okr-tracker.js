@@ -12,6 +12,7 @@ class OKRTracker {
         this.dataFile = 'data/okr-data.json';
         this.fileHandle = null;
         this.FILE_HANDLE_KEY = 'okr_last_file';
+        this.FILE_NAME_KEY = 'okr_last_file_name'; // localStorage key for file name
         this.isFileSystemSupported = 'showOpenFilePicker' in window;
         
         // Store instance reference for onclick handlers
@@ -289,6 +290,10 @@ class OKRTracker {
             this.renderObjectives();
             this.updateFileStatus(true);
             await this.storeFileHandle();
+            // Store file name in localStorage
+            if (this.fileHandle && this.fileHandle.name) {
+                localStorage.setItem(this.FILE_NAME_KEY, this.fileHandle.name);
+            }
         } catch (e) {
             if (e.name !== 'AbortError') {
                 console.error('Failed to open file:', e);
@@ -318,6 +323,10 @@ class OKRTracker {
             this.renderObjectives();
             this.updateFileStatus(true);
             await this.storeFileHandle();
+            // Store file name in localStorage
+            if (this.fileHandle && this.fileHandle.name) {
+                localStorage.setItem(this.FILE_NAME_KEY, this.fileHandle.name);
+            }
         } catch (e) {
             if (e.name !== 'AbortError') {
                 console.error('Failed to create file:', e);
@@ -360,6 +369,21 @@ class OKRTracker {
     }
 
     /**
+     * Clear stored file handle from IndexedDB
+     */
+    async clearFileHandle() {
+        try {
+            const db = await this.openIndexedDB();
+            const tx = db.transaction('fileHandles', 'readwrite');
+            const store = tx.objectStore('fileHandles');
+            await store.delete(this.FILE_HANDLE_KEY);
+            localStorage.removeItem(this.FILE_NAME_KEY);
+        } catch (e) {
+            console.error('Failed to clear file handle:', e);
+        }
+    }
+
+    /**
      * Open IndexedDB
      */
     openIndexedDB() {
@@ -380,6 +404,10 @@ class OKRTracker {
      * Try to restore last opened file
      */
     async tryRestoreLastFile() {
+        if (!this.isFileSystemSupported) {
+            return false;
+        }
+        
         try {
             const storedHandle = await this.retrieveFileHandle();
             if (storedHandle) {
@@ -387,13 +415,26 @@ class OKRTracker {
                 if (permission === 'granted') {
                     this.fileHandle = storedHandle;
                     await this.loadFromFile();
-                    this.renderObjectives();
-                    this.updateFileStatus(true);
+                    // Update localStorage with current file name
+                    if (this.fileHandle && this.fileHandle.name) {
+                        localStorage.setItem(this.FILE_NAME_KEY, this.fileHandle.name);
+                    }
+                    // Only render if UI is already rendered (module is active)
+                    if (document.getElementById('okr-objectives-list')) {
+                        this.renderObjectives();
+                        this.updateFileStatus(true);
+                    }
                     return true;
+                } else {
+                    // Permission denied, clear stored handle
+                    console.log('Permission denied for last file, clearing stored handle');
+                    await this.clearFileHandle();
                 }
             }
         } catch (e) {
             console.log('Could not restore last file:', e.message);
+            // Clear invalid file handle
+            await this.clearFileHandle();
         }
         return false;
     }
@@ -408,8 +449,15 @@ class OKRTracker {
                 fileNameEl.textContent = this.fileHandle.name;
                 fileNameEl.classList.add('okr-file-connected');
             } else {
-                fileNameEl.textContent = 'No file selected';
-                fileNameEl.classList.remove('okr-file-connected');
+                // Try to show last file name from localStorage
+                const lastFileName = localStorage.getItem(this.FILE_NAME_KEY);
+                if (lastFileName) {
+                    fileNameEl.textContent = `${lastFileName} (not connected)`;
+                    fileNameEl.classList.remove('okr-file-connected');
+                } else {
+                    fileNameEl.textContent = 'No file selected';
+                    fileNameEl.classList.remove('okr-file-connected');
+                }
             }
         }
     }
@@ -417,18 +465,18 @@ class OKRTracker {
     /**
      * Open/Activate the OKR tracker in main window
      */
-    open() {
-        this.openTracker();
+    async open() {
+        await this.openTracker();
     }
 
-    activate() {
-        this.openTracker();
+    async activate() {
+        await this.openTracker();
     }
 
     /**
      * Open the OKR tracker in main window
      */
-    openTracker() {
+    async openTracker() {
         // Ensure global reference is set for onclick handlers
         window.okrTracker = this;
         
@@ -441,7 +489,21 @@ class OKRTracker {
         
         mainWindow.innerHTML = this.render();
         this.attachEventListeners();
-        this.renderObjectives();
+        
+        // Try to restore last file if not already loaded
+        if (this.isFileSystemSupported && !this.fileHandle) {
+            const restored = await this.tryRestoreLastFile();
+            if (restored) {
+                // File was restored, objectives already rendered
+            } else {
+                // No file restored, render with existing data
+                this.renderObjectives();
+            }
+        } else {
+            // Render with existing data
+            this.renderObjectives();
+        }
+        
         this.toggleMenuButtons(true); // Show menu bar buttons
         this.updateFileStatus(true); // Update file status display
         // Record initial progress snapshot if data exists
@@ -791,6 +853,174 @@ class OKRTracker {
 
         // Set up history filters
         this.setupHistoryFilters();
+
+        // Fix calendar picker visibility for date inputs
+        this.setupDateInputHandlers();
+        
+        // Also set up handlers when modals are opened
+        this.setupModalOpenHandlers();
+    }
+
+    /**
+     * Setup handlers for when modals are opened to ensure date inputs work
+     */
+    setupModalOpenHandlers() {
+        // Watch for modal activation
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+                    const target = mutation.target;
+                    const mainWindow = document.querySelector('.main-window-section');
+                    const body = document.body;
+                    
+                    if (target.classList.contains('okr-modal')) {
+                        if (target.classList.contains('active')) {
+                            // Modal just opened - allow horizontal overflow for calendar picker
+                            if (mainWindow) {
+                                mainWindow.classList.add('okr-modal-active');
+                                // Store original and set overflow-x to visible
+                                if (!mainWindow.dataset.originalOverflowX) {
+                                    const computed = window.getComputedStyle(mainWindow);
+                                    mainWindow.dataset.originalOverflowX = computed.overflowX || 'hidden';
+                                }
+                                mainWindow.style.overflowX = 'visible';
+                            }
+                            if (body) {
+                                body.classList.add('okr-modal-active');
+                            }
+                            // Ensure date inputs are properly set up
+                            setTimeout(() => {
+                                this.setupDateInputHandlers();
+                            }, 100);
+                        } else {
+                            // Modal just closed - restore original overflow
+                            if (mainWindow) {
+                                mainWindow.classList.remove('okr-modal-active');
+                                if (mainWindow.dataset.originalOverflowX !== undefined) {
+                                    mainWindow.style.overflowX = mainWindow.dataset.originalOverflowX || 'hidden';
+                                }
+                            }
+                            if (body) {
+                                body.classList.remove('okr-modal-active');
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Observe all modals
+        document.querySelectorAll('.okr-modal').forEach(modal => {
+            observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
+        });
+        
+        // Also observe dynamically added modals
+        const modalObserver = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.classList && node.classList.contains('okr-modal')) {
+                        observer.observe(node, { attributes: true, attributeFilter: ['class'] });
+                    }
+                });
+            });
+        });
+        
+        const container = document.getElementById('modules-container');
+        if (container) {
+            modalObserver.observe(container, { childList: true, subtree: true });
+        }
+    }
+
+    /**
+     * Setup handlers for date inputs to allow calendar picker to be visible
+     */
+    setupDateInputHandlers() {
+        // Use event delegation to handle dynamically added date inputs
+        document.addEventListener('click', (e) => {
+            // Check if clicking on date input or its calendar icon
+            const dateInput = e.target.closest('input[type="date"]');
+            if (dateInput && dateInput.closest('.okr-modal-content')) {
+                const modalContent = dateInput.closest('.okr-modal-content');
+                const mainWindow = document.querySelector('.main-window-section');
+                
+                if (modalContent) {
+                    // Store original overflow if not already stored
+                    if (!modalContent.dataset.originalOverflowY) {
+                        modalContent.dataset.originalOverflowY = window.getComputedStyle(modalContent).overflowY || 'auto';
+                    }
+                    // Only change overflow-x to visible, keep overflow-y for scrolling
+                    modalContent.style.overflowX = 'visible';
+                }
+                
+                // Also fix main window overflow-x only (keep overflow-y for scrolling)
+                if (mainWindow && !mainWindow.dataset.originalOverflowX) {
+                    const computedStyle = window.getComputedStyle(mainWindow);
+                    mainWindow.dataset.originalOverflowX = computedStyle.overflowX || 'hidden';
+                    mainWindow.dataset.originalOverflowY = computedStyle.overflowY || 'auto';
+                    mainWindow.style.overflowX = 'visible';
+                    // Keep overflow-y as auto for scrolling
+                }
+                
+                // Try to programmatically show the picker if it's not showing
+                setTimeout(() => {
+                    if (dateInput.showPicker && typeof dateInput.showPicker === 'function') {
+                        try {
+                            dateInput.showPicker();
+                        } catch (err) {
+                            // showPicker might not be available or might require user gesture
+                            console.log('showPicker not available:', err);
+                        }
+                    }
+                }, 10);
+            }
+        }, true); // Use capture phase
+
+        document.addEventListener('focus', (e) => {
+            if (e.target.matches('.okr-modal-content input[type="date"]')) {
+                const modalContent = e.target.closest('.okr-modal-content');
+                const mainWindow = document.querySelector('.main-window-section');
+                
+                if (modalContent) {
+                    // Store original overflow if not already stored
+                    if (!modalContent.dataset.originalOverflowY) {
+                        modalContent.dataset.originalOverflowY = window.getComputedStyle(modalContent).overflowY || 'auto';
+                    }
+                    // Only change overflow-x to visible, keep overflow-y for scrolling
+                    modalContent.style.overflowX = 'visible';
+                }
+                
+                // Also fix main window overflow-x only (keep overflow-y for scrolling)
+                if (mainWindow && !mainWindow.dataset.originalOverflowX) {
+                    const computedStyle = window.getComputedStyle(mainWindow);
+                    mainWindow.dataset.originalOverflowX = computedStyle.overflowX || 'hidden';
+                    mainWindow.dataset.originalOverflowY = computedStyle.overflowY || 'auto';
+                    mainWindow.style.overflowX = 'visible';
+                }
+            }
+        }, true); // Use capture phase
+
+        document.addEventListener('blur', (e) => {
+            if (e.target.matches('.okr-modal-content input[type="date"]')) {
+                const modalContent = e.target.closest('.okr-modal-content');
+                const mainWindow = document.querySelector('.main-window-section');
+                
+                if (modalContent && modalContent.dataset.originalOverflowY !== undefined) {
+                    // Use setTimeout to allow calendar picker to close first
+                    setTimeout(() => {
+                        modalContent.style.overflowX = 'visible'; // Keep visible for calendar
+                        modalContent.style.overflowY = modalContent.dataset.originalOverflowY || 'auto';
+                    }, 300);
+                }
+                
+                // Restore main window overflow-x only
+                if (mainWindow && mainWindow.dataset.originalOverflowX !== undefined) {
+                    setTimeout(() => {
+                        mainWindow.style.overflowX = mainWindow.dataset.originalOverflowX || 'hidden';
+                        mainWindow.style.overflowY = mainWindow.dataset.originalOverflowY || 'auto';
+                    }, 300);
+                }
+            }
+        }, true); // Use capture phase
     }
 
     /**

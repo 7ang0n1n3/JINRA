@@ -22,9 +22,6 @@
 /* Ensure main window content can contain positioned elements */
 .main-window-content {
     position: relative;
-}
-
-.main-window-content {
     width: 100%;
     height: 100%;
     color: white;

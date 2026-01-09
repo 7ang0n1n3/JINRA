@@ -567,11 +567,13 @@
     bottom: 10px; /* Bottom edge with margin */
     background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(4px);
-    z-index: 999; /* Above main window (998) but below menu bar (1000) */
+    z-index: 10000; /* High z-index to be above everything */
     align-items: center;
     justify-content: center;
     border-radius: 8px;
-    overflow: visible; /* Allow calendar picker to overflow modal bounds */
+    overflow: visible !important; /* Allow calendar picker to overflow modal bounds */
+    /* Ensure modal is not clipped by parent containers */
+    contain: none !important;
 }
 
 .okr-modal.active {
@@ -589,13 +591,56 @@
     overflow-y: auto;
     overflow-x: visible;
     position: relative;
-    z-index: 1000; /* Ensure modal content is above backdrop */
+    z-index: 10001; /* Ensure modal content is above backdrop */
+    /* Prevent clipping of calendar picker */
+    contain: none !important;
+    isolation: isolate;
 }
 
-/* Ensure date picker dropdown appears above modal */
+/* Ensure date picker dropdown appears above modal and can escape overflow */
 .okr-modal-content input[type="date"] {
     position: relative;
-    z-index: 1001;
+    z-index: 10002 !important; /* High z-index for date inputs */
+    /* Create a new stacking context to escape parent overflow */
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+}
+
+/* Ensure the calendar picker dropdown itself is visible */
+.okr-modal-content input[type="date"]:focus {
+    z-index: 10003 !important;
+}
+
+/* Date input containers should not clip - ensure they allow overflow */
+.okr-form-field,
+.okr-kr-date-field {
+    overflow: visible !important;
+    position: relative;
+}
+
+/* When a modal is active, ensure main window doesn't clip calendar picker horizontally */
+/* But keep vertical scrolling working */
+.okr-modal-active .main-window-section {
+    overflow-x: visible !important;
+    /* Keep overflow-y as auto for scrolling */
+}
+
+body.okr-modal-active .main-window-section {
+    overflow-x: visible !important;
+    /* Keep overflow-y as auto for scrolling */
+}
+
+/* Alternative approach: ensure date inputs can escape all containers */
+.okr-modal.active .okr-modal-content input[type="date"] {
+    position: relative;
+    z-index: 99999 !important;
+}
+
+/* Ensure the calendar picker indicator is clickable */
+.okr-modal-content input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer !important;
+    z-index: 99999 !important;
+    position: relative;
 }
 
 .okr-modal-wide {
@@ -698,7 +743,7 @@
     color: white;
     color-scheme: dark;
     position: relative;
-    z-index: 1;
+    z-index: 10002 !important; /* High z-index to ensure calendar picker is visible */
 }
 
 .okr-form-field input[type="date"]::-webkit-calendar-picker-indicator,
