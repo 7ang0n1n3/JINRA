@@ -238,6 +238,10 @@ class WeeklyUpdate {
         if (section && section.entries[index]) {
             section.entries[index][field] = value;
             this.saveData();
+            // Re-render to update tab labels when process or county changes
+            if (field === 'process' || field === 'county') {
+                this.renderAndAttach();
+            }
         }
     }
 
@@ -309,6 +313,19 @@ class WeeklyUpdate {
     }
 
     /**
+     * Get week of the year from a date string (YYYY-MM-DD format)
+     * Uses ISO 8601 week numbering (week 1 is the first week with a Thursday)
+     */
+    getWeekOfYear(dateString) {
+        const date = new Date(dateString + 'T00:00:00');
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        const dayNum = d.getUTCDay() || 7;
+        d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+        const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+        return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+    }
+
+    /**
      * Export to text file
      */
     exportToText() {
@@ -319,32 +336,36 @@ class WeeklyUpdate {
                 text += '\n\n';
             }
 
-            text += `DATE : ${section.date}\n\n`;
+            const weekNumber = this.getWeekOfYear(section.date);
+            text += `DATE : ${section.date} (Week ${weekNumber})\n\n`;
             text += `REGION  : ${section.region}\n\n`;
 
             section.entries.forEach(entry => {
                 // Export entry if it has title, content, county, or process
                 const hasData = entry.title.trim() || entry.content.trim() || (entry.county && entry.county.trim() !== 'N/A') || (entry.process && entry.process.trim() !== 'DR');
                 if (hasData) {
-                    text += `\tCOUNTY  : ${entry.county || 'N/A'}\n`;
+                    text += `\tCOUNTRY : ${entry.county || 'N/A'}\n`;
                     text += `\tPROCESS : ${entry.process || 'DR'}\n`;
                     text += `\tTITLE   : ${entry.title || ''}\n`;
                     
-                    // Format content - first line on same line as CONTENT label, subsequent lines aligned
+                    // Format detail - first line on same line as DETAIL label, subsequent lines aligned
                     const contentLines = entry.content.split('\n');
                     if (contentLines.length > 0 && contentLines[0].trim()) {
-                        // First line starts on the CONTENT line
-                        // "CONTENT : " = 10 characters, tab = 8 spaces typically
-                        // To align subsequent lines, we need: tab (8) + "CONTENT : " (10) = 18 characters
-                        // But user wants it 4 characters back, so 18 - 4 = 14 spaces
-                        text += `\tCONTENT : ${contentLines[0]}\n`;
-                        // Subsequent lines align with the first line of content (after "CONTENT : ") minus 4 characters
-                        const indent = '              '; // 14 spaces to align with content after "CONTENT : " minus 4 chars
+                        // First line uses tab + "DETAIL  : " + content
+                        // Tab typically = 8 spaces, "DETAIL  : " = 10 characters
+                        // To align subsequent lines with content start + 4 chars, we need:
+                        // 8 (tab) + 10 ("DETAIL  : ") + 4 - 8 (correction) = 14 spaces
+                        text += `\tDETAIL  : ${contentLines[0]}\n`;
+                        // Subsequent lines: use spaces to match tab width + label + 4 extra chars - 8 correction
+                        const tabWidth = 8; // Standard tab width
+                        const labelWidth = 'DETAIL  : '.length; // 10 characters
+                        const extraIndent = 4; // 4 characters to the right
+                        const indent = ' '.repeat(tabWidth + labelWidth + extraIndent - 8); // 14 spaces (22 - 8 correction)
                         for (let i = 1; i < contentLines.length; i++) {
                             text += `${indent}${contentLines[i]}\n`;
                         }
                     } else {
-                        text += `\tCONTENT :\n`;
+                        text += `\tDETAIL  :\n`;
                     }
                     text += '\n';
                 }
@@ -450,13 +471,31 @@ class WeeklyUpdate {
             const contentInput = document.getElementById(`wu-content-${this.activeEntryIndex}`);
 
             if (countyInput) {
+                // Save data on input (for persistence, without re-rendering)
                 countyInput.addEventListener('input', (e) => {
+                    const section = this.getActiveSection();
+                    if (section && section.entries[this.activeEntryIndex]) {
+                        section.entries[this.activeEntryIndex].county = e.target.value;
+                        this.saveData();
+                    }
+                });
+                // Update tab name on blur (when user finishes editing)
+                countyInput.addEventListener('blur', (e) => {
                     this.updateEntryField(this.activeEntryIndex, 'county', e.target.value);
                 });
             }
 
             if (processInput) {
+                // Save data on input (for persistence, without re-rendering)
                 processInput.addEventListener('input', (e) => {
+                    const section = this.getActiveSection();
+                    if (section && section.entries[this.activeEntryIndex]) {
+                        section.entries[this.activeEntryIndex].process = e.target.value;
+                        this.saveData();
+                    }
+                });
+                // Update tab name on blur (when user finishes editing)
+                processInput.addEventListener('blur', (e) => {
                     this.updateEntryField(this.activeEntryIndex, 'process', e.target.value);
                 });
             }
@@ -555,12 +594,14 @@ class WeeklyUpdate {
                     </div>
                     <div class="wu-entry-tabs">
                         ${activeSection.entries.map((entry, index) => {
+                            const process = entry.process || 'DR';
+                            const county = entry.county || 'N/A';
                             return `
                                 <div 
                                     class="wu-entry-tab ${index === this.activeEntryIndex ? 'active' : ''}" 
                                     id="wu-entry-tab-${index}"
                                 >
-                                    <span>Entry ${index + 1}</span>
+                                    <span>${process}::${county}::${index + 1}</span>
                                     ${activeSection.entries.length > 1 ? `
                                         <button 
                                             id="wu-remove-entry-${index}" 
@@ -579,12 +620,12 @@ class WeeklyUpdate {
                                 <div class="wu-entry-card">
                                     <div class="wu-form-row">
                                         <div class="wu-form-field">
-                                            <label for="wu-county-${this.activeEntryIndex}">COUNTY:</label>
+                                            <label for="wu-county-${this.activeEntryIndex}">COUNTRY:</label>
                                             <input 
                                                 type="text" 
                                                 id="wu-county-${this.activeEntryIndex}" 
                                                 class="wu-title-input"
-                                                placeholder="Enter county..."
+                                                placeholder="Enter country..."
                                                 value="${this.escapeHtml(activeEntry.county || 'N/A')}"
                                             />
                                         </div>
@@ -610,11 +651,11 @@ class WeeklyUpdate {
                                         />
                                     </div>
                                     <div class="wu-entry-field">
-                                        <label for="wu-content-${this.activeEntryIndex}">CONTENT:</label>
+                                        <label for="wu-content-${this.activeEntryIndex}">DETAIL :</label>
                                         <textarea 
                                             id="wu-content-${this.activeEntryIndex}" 
                                             class="wu-content-input"
-                                            placeholder="Enter content..."
+                                            placeholder="Enter detail..."
                                             rows="4"
                                         >${this.escapeHtml(activeEntry.content)}</textarea>
                                     </div>

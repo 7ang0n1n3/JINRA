@@ -59,3 +59,176 @@
     font-family: 'Courier New', monospace;
 }
 
+/* Timezone Converter Modal */
+.wt-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+}
+
+.wt-modal-content {
+    background: rgba(20, 20, 20, 0.95);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 35px 40px;
+    min-width: 790px;
+    max-width: 945px;
+    width: 90%;
+    color: white;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.wt-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.wt-modal-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    color: #667eea;
+}
+
+.wt-modal-close {
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 2rem;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.wt-modal-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.wt-modal-body {
+    padding: 10px 0;
+}
+
+.wt-converter-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.wt-converter-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.wt-converter-field {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wt-converter-field label {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.wt-converter-field input,
+.wt-converter-field select {
+    background: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 12px 15px;
+    color: white;
+    font-size: 1rem;
+    font-family: 'Courier New', monospace;
+    transition: all 0.2s ease;
+}
+
+.wt-converter-field input:focus,
+.wt-converter-field select:focus {
+    outline: none;
+    border-color: #667eea;
+    background: rgba(40, 40, 40, 0.9);
+}
+
+.wt-converter-field input[type="datetime-local"] {
+    color-scheme: dark;
+}
+
+.wt-converter-arrow {
+    font-size: 1.5rem;
+    color: #667eea;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.wt-convert-button {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    border-radius: 8px;
+    padding: 14px 28px;
+    color: white;
+    font-size: 1.05rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    align-self: flex-start;
+}
+
+.wt-convert-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.wt-convert-button:active {
+    transform: translateY(0);
+}
+
+.wt-converter-result {
+    margin-top: 25px;
+    padding: 25px;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+}
+
+.wt-result-label {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.wt-result-time {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #667eea;
+    font-family: 'Courier New', monospace;
+    margin-bottom: 10px;
+}
+
+.wt-result-date {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.8);
+}
+

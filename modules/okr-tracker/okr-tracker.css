@@ -3,6 +3,18 @@
  * Based on the original okr-tracker project styles
  */
 
+/* Smaller text for OKR tracker menu buttons */
+#okr-menu-add-objective,
+#okr-menu-open-file,
+#okr-menu-new-file,
+#okr-menu-export,
+#okr-menu-help,
+#okr-menu-trends,
+#okr-menu-history {
+    font-size: 0.75em !important;
+    padding: 6px 12px !important;
+}
+
 .okr-tracker-container {
     padding: 20px;
     color: rgba(255, 255, 255, 0.9);
@@ -484,12 +496,64 @@
     border-color: #dc2626 !important;
 }
 
+.okr-kr-confidence-badge,
 .okr-kr-weight-badge {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.okr-kr-confidence-high {
+    background: #10b981;
+    color: white;
+}
+
+.okr-kr-confidence-medium {
+    background: #eab308;
+    color: black;
+}
+
+.okr-kr-confidence-low {
+    background: #ef4444;
+    color: white;
+}
+
+.okr-kr-weight-badge {
     background: #667eea;
     color: white;
-    padding: 4px 8px;
+}
+
+.okr-kr-evidence-section,
+.okr-kr-comments-section {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.okr-kr-section-label {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.okr-kr-evidence-content,
+.okr-kr-comments-content {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.7);
+    white-space: pre-wrap;
+    line-height: 1.5;
+    padding: 10px;
+    background: rgba(20, 20, 20, 0.6);
     border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 /* Modals - constrained to main window */
@@ -507,6 +571,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
+    overflow: visible; /* Allow calendar picker to overflow modal bounds */
 }
 
 .okr-modal.active {
@@ -522,6 +587,15 @@
     max-width: 400px;
     max-height: 90vh;
     overflow-y: auto;
+    overflow-x: visible;
+    position: relative;
+    z-index: 1000; /* Ensure modal content is above backdrop */
+}
+
+/* Ensure date picker dropdown appears above modal */
+.okr-modal-content input[type="date"] {
+    position: relative;
+    z-index: 1001;
 }
 
 .okr-modal-wide {
@@ -623,6 +697,8 @@
 .okr-kr-date-field input[type="date"] {
     color: white;
     color-scheme: dark;
+    position: relative;
+    z-index: 1;
 }
 
 .okr-form-field input[type="date"]::-webkit-calendar-picker-indicator,
@@ -634,6 +710,8 @@
     height: 20px;
     padding: 2px;
     background: transparent;
+    z-index: 1000;
+    position: relative;
 }
 
 /* Firefox date picker styling */
@@ -769,5 +847,291 @@
 #okr-kr-form button {
     width: 100%;
     margin-top: 10px;
+}
+
+/* Progress Trends and History Modals */
+.okr-modal-history {
+    max-width: 800px;
+    max-height: 85vh;
+}
+
+.okr-progress-trends-charts {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    margin-top: 20px;
+}
+
+.okr-trend-chart-container {
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.okr-trend-chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    gap: 1rem;
+}
+
+.okr-trend-chart-header h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    flex: 1;
+}
+
+.okr-trend-group-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.okr-trend-group-personal {
+    background: #10b981;
+    color: white;
+}
+
+.okr-trend-group-team {
+    background: #eab308;
+    color: black;
+}
+
+.okr-trend-group-company {
+    background: #3b82f6;
+    color: white;
+}
+
+.okr-trend-chart-wrapper {
+    margin: 1rem 0;
+    background: rgba(10, 10, 10, 0.8);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.okr-trend-chart {
+    width: 100%;
+    height: 200px;
+    display: block;
+}
+
+.okr-trend-chart-stats {
+    display: flex;
+    gap: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.okr-trend-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.okr-trend-stat-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.okr-trend-stat-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.okr-trend-stat-value.okr-trend-positive {
+    color: #10b981;
+}
+
+.okr-trend-stat-value.okr-trend-negative {
+    color: #ef4444;
+}
+
+.okr-trend-chart-legend {
+    display: flex;
+    gap: 2rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.okr-trend-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.okr-trend-legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.okr-trend-legend-label {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.okr-trend-legend-value {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.okr-history-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.okr-history-filters label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.okr-history-filters input[type="radio"] {
+    cursor: pointer;
+}
+
+.okr-history-filters select {
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(20, 20, 20, 0.8);
+    color: white;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.okr-history-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.okr-history-entry {
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.okr-history-entry-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.okr-history-type-icon {
+    font-size: 1.2rem;
+}
+
+.okr-history-item-type {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+    text-transform: uppercase;
+}
+
+.okr-history-item-title {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.9);
+    flex: 1;
+    min-width: 200px;
+}
+
+.okr-history-group-badge {
+    font-size: 0.7rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.okr-history-group-personal {
+    background: #10b981;
+    color: white;
+}
+
+.okr-history-group-team {
+    background: #eab308;
+    color: black;
+}
+
+.okr-history-group-company {
+    background: #3b82f6;
+    color: white;
+}
+
+.okr-history-timestamp {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    white-space: nowrap;
+}
+
+.okr-history-entry-details {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.okr-history-change-type {
+    font-size: 0.75rem;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.okr-history-change-created {
+    background: #10b981;
+    color: white;
+}
+
+.okr-history-change-updated {
+    background: #eab308;
+    color: black;
+}
+
+.okr-history-change-progress {
+    background: #3b82f6;
+    color: white;
+}
+
+.okr-history-change-deleted {
+    background: #ef4444;
+    color: white;
+}
+
+.okr-history-change-description {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.7);
+    flex: 1;
 }
 

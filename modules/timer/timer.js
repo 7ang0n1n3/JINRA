@@ -195,27 +195,24 @@ class Timer {
      */
     renderAndAttach() {
         const mainWindow = document.getElementById('modules-container');
-        const moduleContent = mainWindow.querySelector('.module-content');
-        if (moduleContent) {
-            // Set global reference for onclick handlers
-            window.timer = this;
-            moduleContent.innerHTML = this.render();
-            this.attachEventListeners();
-            this.updateDisplays();
-            
-            // Update all button states
-            this.timers.forEach(timer => {
-                this.updateButtons(timer.id);
-            });
-            
-            this.countdownTimers.forEach(cdTimer => {
-                this.updateCountdownDisplay(cdTimer.id);
-                this.updateCountdownButtons(cdTimer.id);
-                if (cdTimer.ended && cdTimer.remaining === 0) {
-                    this.startBlinking(cdTimer.id);
-                }
-            });
-        }
+        // Set global reference for onclick handlers
+        window.timer = this;
+        mainWindow.innerHTML = this.render();
+        this.attachEventListeners();
+        this.updateDisplays();
+        
+        // Update all button states
+        this.timers.forEach(timer => {
+            this.updateButtons(timer.id);
+        });
+        
+        this.countdownTimers.forEach(cdTimer => {
+            this.updateCountdownDisplay(cdTimer.id);
+            this.updateCountdownButtons(cdTimer.id);
+            if (cdTimer.ended && cdTimer.remaining === 0) {
+                this.startBlinking(cdTimer.id);
+            }
+        });
     }
 
     /**
@@ -227,12 +224,7 @@ class Timer {
 
     activate() {
         const mainWindow = document.getElementById('modules-container');
-        mainWindow.innerHTML = `
-            <div class="module" id="module-timer">
-                <div class="module-header">${this.name}</div>
-                <div class="module-content">${this.render()}</div>
-            </div>
-        `;
+        mainWindow.innerHTML = this.render();
         // Set global reference for onclick handlers
         window.timer = this;
         // Register and show menu buttons

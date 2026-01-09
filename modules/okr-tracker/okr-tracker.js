@@ -36,7 +36,18 @@ class OKRTracker {
      */
     registerMenuButton() {
         const menuBar = document.getElementById('menu-bar');
-        const menuContent = menuBar.querySelector('.menu-bar-content');
+        if (!menuBar) {
+            console.error('OKR Tracker: menu-bar not found');
+            return;
+        }
+        
+        let menuContent = menuBar.querySelector('.menu-bar-content');
+        if (!menuContent) {
+            // Create menu content if it doesn't exist
+            menuContent = document.createElement('div');
+            menuContent.className = 'menu-bar-content';
+            menuBar.appendChild(menuContent);
+        }
         
         // Setup menu bar container if not already done
         if (!menuContent.classList.contains('menu-bar-container-setup')) {
@@ -49,6 +60,15 @@ class OKRTracker {
             menuContent.style.padding = '0 20px';
         }
         
+        // Remove existing OKR buttons if they exist (to avoid duplicates)
+        const existingButtonIds = ['okr-menu-add-objective', 'okr-menu-open-file', 'okr-menu-new-file', 'okr-menu-export', 'okr-menu-help', 'okr-menu-trends', 'okr-menu-history'];
+        existingButtonIds.forEach(btnId => {
+            const existingBtn = document.getElementById(btnId);
+            if (existingBtn && existingBtn.parentNode) {
+                existingBtn.parentNode.removeChild(existingBtn);
+            }
+        });
+        
         // Create buttons for OKR tracker
         const addBtn = document.createElement('button');
         addBtn.className = 'menu-bar-button';
@@ -58,29 +78,36 @@ class OKRTracker {
         addBtn.addEventListener('click', () => {
             this.openObjectiveModal();
         });
+        menuContent.appendChild(addBtn);
         
-        // Open File button (if File System API supported)
-        if (this.isFileSystemSupported) {
-            const openBtn = document.createElement('button');
-            openBtn.className = 'menu-bar-button';
-            openBtn.textContent = '📂 Open File';
-            openBtn.id = 'okr-menu-open-file';
-            openBtn.style.display = 'none';
-            openBtn.addEventListener('click', () => {
+        // Open File button (always create, but check support when clicked)
+        const openBtn = document.createElement('button');
+        openBtn.className = 'menu-bar-button';
+        openBtn.textContent = '📂 Open File';
+        openBtn.id = 'okr-menu-open-file';
+        openBtn.style.display = 'none';
+        openBtn.addEventListener('click', () => {
+            if (this.isFileSystemSupported) {
                 this.openFile();
-            });
-            menuContent.appendChild(openBtn);
-            
-            const newBtn = document.createElement('button');
-            newBtn.className = 'menu-bar-button';
-            newBtn.textContent = '📄 New File';
-            newBtn.id = 'okr-menu-new-file';
-            newBtn.style.display = 'none';
-            newBtn.addEventListener('click', () => {
+            } else {
+                alert('File System Access API is not supported in this browser. Please use a modern browser like Chrome, Edge, or Opera.');
+            }
+        });
+        menuContent.appendChild(openBtn);
+        
+        const newBtn = document.createElement('button');
+        newBtn.className = 'menu-bar-button';
+        newBtn.textContent = '📄 New File';
+        newBtn.id = 'okr-menu-new-file';
+        newBtn.style.display = 'none';
+        newBtn.addEventListener('click', () => {
+            if (this.isFileSystemSupported) {
                 this.createFile();
-            });
-            menuContent.appendChild(newBtn);
-        }
+            } else {
+                alert('File System Access API is not supported in this browser. Please use a modern browser like Chrome, Edge, or Opera.');
+            }
+        });
+        menuContent.appendChild(newBtn);
         
         const exportBtn = document.createElement('button');
         exportBtn.className = 'menu-bar-button';
@@ -90,6 +117,7 @@ class OKRTracker {
         exportBtn.addEventListener('click', () => {
             this.exportToText();
         });
+        menuContent.appendChild(exportBtn);
         
         const helpBtn = document.createElement('button');
         helpBtn.className = 'menu-bar-button';
@@ -99,26 +127,49 @@ class OKRTracker {
         helpBtn.addEventListener('click', () => {
             document.getElementById('okr-help-modal').classList.add('active');
         });
-        
-        menuContent.appendChild(addBtn);
-        menuContent.appendChild(exportBtn);
         menuContent.appendChild(helpBtn);
+
+        const trendsBtn = document.createElement('button');
+        trendsBtn.className = 'menu-bar-button';
+        trendsBtn.textContent = '📈 Progress Trends';
+        trendsBtn.id = 'okr-menu-trends';
+        trendsBtn.style.display = 'none';
+        trendsBtn.addEventListener('click', () => {
+            this.openProgressTrendsModal();
+        });
+        menuContent.appendChild(trendsBtn);
+
+        const historyBtn = document.createElement('button');
+        historyBtn.className = 'menu-bar-button';
+        historyBtn.textContent = '📊 View History';
+        historyBtn.id = 'okr-menu-history';
+        historyBtn.style.display = 'none';
+        historyBtn.addEventListener('click', () => {
+            this.openHistoryModal();
+        });
+        menuContent.appendChild(historyBtn);
+        
+        console.log('OKR Tracker: Menu buttons registered', {
+            buttonsCreated: existingButtonIds.length,
+            fileSystemSupported: this.isFileSystemSupported,
+            menuContent: menuContent
+        });
     }
 
     /**
      * Show/hide menu bar buttons
      */
     toggleMenuButtons(show) {
-        const buttons = ['okr-menu-add-objective', 'okr-menu-export', 'okr-menu-help'];
-        if (this.isFileSystemSupported) {
-            buttons.push('okr-menu-open-file', 'okr-menu-new-file');
-        }
+        const buttons = ['okr-menu-add-objective', 'okr-menu-open-file', 'okr-menu-new-file', 'okr-menu-export', 'okr-menu-help', 'okr-menu-trends', 'okr-menu-history'];
         buttons.forEach(btnId => {
             const btn = document.getElementById(btnId);
             if (btn) {
                 btn.style.display = show ? 'block' : 'none';
+            } else {
+                console.warn(`OKR Tracker: Button ${btnId} not found`);
             }
         });
+        console.log('OKR Tracker: Menu buttons toggled', { show, buttonsFound: buttons.filter(id => document.getElementById(id)) });
     }
 
     /**
@@ -150,11 +201,16 @@ class OKRTracker {
             if (response.ok) {
                 this.data = await response.json();
             } else {
-                this.data = { objectives: [] };
+                this.data = { objectives: [], history: [] };
             }
         } catch (error) {
             console.log('No existing OKR data found, starting fresh');
-            this.data = { objectives: [] };
+            this.data = { objectives: [], history: [] };
+        }
+        
+        // Ensure history array exists
+        if (!this.data.history) {
+            this.data.history = [];
         }
     }
 
@@ -183,9 +239,17 @@ class OKRTracker {
             const file = await this.fileHandle.getFile();
             const text = await file.text();
             this.data = JSON.parse(text);
+            // Ensure history array exists
+            if (!this.data.history) {
+                this.data.history = [];
+            }
+            // Ensure objectives array exists
+            if (!this.data.objectives) {
+                this.data.objectives = [];
+            }
         } catch (e) {
             console.error('Failed to load from file:', e);
-            this.data = { objectives: [] };
+            this.data = { objectives: [], history: [] };
         }
     }
 
@@ -249,7 +313,7 @@ class OKRTracker {
                     accept: { 'application/json': ['.json'] }
                 }]
             });
-            this.data = { objectives: [] };
+            this.data = { objectives: [], history: [] };
             await this.saveToFile();
             this.renderObjectives();
             this.updateFileStatus(true);
@@ -380,6 +444,10 @@ class OKRTracker {
         this.renderObjectives();
         this.toggleMenuButtons(true); // Show menu bar buttons
         this.updateFileStatus(true); // Update file status display
+        // Record initial progress snapshot if data exists
+        if (this.data && this.data.objectives && this.data.objectives.length > 0) {
+            this.recordProgressSnapshot();
+        }
     }
 
     /**
@@ -566,6 +634,14 @@ class OKRTracker {
                                 <option value="at-risk">At Risk</option>
                             </select>
                         </div>
+                        <div class="okr-form-field">
+                            <label>Confidence</label>
+                            <select id="okr-kr-confidence">
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
                         <div class="okr-kr-dates">
                             <div class="okr-kr-date-field">
                                 <label>Start Date:</label>
@@ -580,8 +656,72 @@ class OKRTracker {
                             <label>Last Check-in</label>
                             <input type="date" id="okr-kr-last-checkin">
                         </div>
+                        <div class="okr-form-field">
+                            <label>Evidence</label>
+                            <textarea id="okr-kr-evidence" placeholder="Enter evidence or proof of progress..." rows="3"></textarea>
+                        </div>
+                        <div class="okr-form-field">
+                            <label>Comments</label>
+                            <textarea id="okr-kr-comments" placeholder="Enter any comments or notes..." rows="3"></textarea>
+                        </div>
                         <button type="submit" id="okr-kr-submit-btn">Add Key Result</button>
                     </form>
+                </div>
+            </div>
+
+            <!-- Modal for Progress Trends -->
+            <div id="okr-progress-trends-modal" class="okr-modal">
+                <div class="okr-modal-content okr-modal-wide okr-modal-history">
+                    <span class="okr-close" data-modal="okr-progress-trends-modal">&times;</span>
+                    <h3>📈 Progress Trends & Analysis</h3>
+                    <div id="okr-progress-trends-content">
+                        <div class="okr-history-filters">
+                            <label>
+                                <input type="radio" name="okr-trends-view" value="grouped" id="okr-trends-view-grouped" checked>
+                                <span>Grouped by Category</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="okr-trends-view" value="individual" id="okr-trends-view-individual">
+                                <span>Individual Objectives</span>
+                            </label>
+                        </div>
+                        <div class="okr-history-filters" id="okr-trends-individual-filters" style="display: none;">
+                            <select id="okr-trends-filter-group">
+                                <option value="all">All Groups</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Team">Team</option>
+                                <option value="Company">Company</option>
+                            </select>
+                            <select id="okr-trends-filter-objective">
+                                <option value="all">All Objectives</option>
+                            </select>
+                        </div>
+                        <div id="okr-progress-trends-charts" class="okr-progress-trends-charts"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal for History -->
+            <div id="okr-history-modal" class="okr-modal">
+                <div class="okr-modal-content okr-modal-wide okr-modal-history">
+                    <span class="okr-close" data-modal="okr-history-modal">&times;</span>
+                    <h3>📊 Change History & Trends</h3>
+                    <div id="okr-history-content">
+                        <div class="okr-history-filters">
+                            <select id="okr-history-filter-type">
+                                <option value="all">All Changes</option>
+                                <option value="objective">Objectives Only</option>
+                                <option value="keyresult">Key Results Only</option>
+                            </select>
+                            <select id="okr-history-filter-group">
+                                <option value="all">All Groups</option>
+                                <option value="Personal">Personal</option>
+                                <option value="Team">Team</option>
+                                <option value="Company">Company</option>
+                            </select>
+                        </div>
+                        <div id="okr-history-list" class="okr-history-list"></div>
+                    </div>
                 </div>
             </div>
         `;
@@ -648,6 +788,9 @@ class OKRTracker {
                 });
             }
         });
+
+        // Set up history filters
+        this.setupHistoryFilters();
     }
 
     /**
@@ -757,6 +900,76 @@ class OKRTracker {
     }
 
     /**
+     * Add history entry
+     */
+    addHistoryEntry(type, itemType, itemId, itemTitle, changes, group = null) {
+        if (!this.data.history) {
+            this.data.history = [];
+        }
+        
+        const entry = {
+            id: this.generateId(),
+            timestamp: new Date().toISOString(),
+            type: type, // 'created', 'updated', 'progress', 'status', 'deleted'
+            itemType: itemType, // 'objective' or 'keyresult'
+            itemId: itemId,
+            itemTitle: itemTitle,
+            changes: changes, // Object describing what changed
+            group: group
+        };
+        
+        this.data.history.unshift(entry); // Add to beginning
+        
+        // Keep only last 1000 history entries to prevent file bloat
+        if (this.data.history.length > 1000) {
+            this.data.history = this.data.history.slice(0, 1000);
+        }
+    }
+
+    /**
+     * Record progress snapshot for trend tracking
+     */
+    recordProgressSnapshot() {
+        if (!this.data.objectives || this.data.objectives.length === 0) return;
+        
+        const timestamp = new Date().toISOString();
+        const snapshot = {
+            timestamp: timestamp,
+            objectives: {}
+        };
+        
+        this.data.objectives.forEach(obj => {
+            const progress = this.calculateProgress(obj);
+            snapshot.objectives[obj.id] = {
+                title: obj.title,
+                group: obj.group || 'Personal',
+                progress: progress,
+                keyResults: {}
+            };
+            
+            if (obj.keyResults) {
+                obj.keyResults.forEach(kr => {
+                    const krProgress = Math.min(100, Math.round((kr.current / kr.target) * 100));
+                    snapshot.objectives[obj.id].keyResults[kr.id] = {
+                        title: kr.title,
+                        progress: krProgress,
+                        current: kr.current,
+                        target: kr.target
+                    };
+                });
+            }
+        });
+        
+        // Store in history as progress snapshot
+        if (!this.data.history) {
+            this.data.history = [];
+        }
+        
+        // Always create a new snapshot entry to track progress changes over time
+        this.addHistoryEntry('progress-snapshot', 'system', 'all', 'Progress Snapshot', { snapshot: snapshot }, null);
+    }
+
+    /**
      * Render objectives
      */
     renderObjectives() {
@@ -826,12 +1039,15 @@ class OKRTracker {
                                                 </div>
                                                 <div class="okr-kr-meta-row">
                                                     <span class="okr-kr-meta-item okr-kr-status-badge okr-kr-status-${kr.status || 'on-track'}">${this.getStatusLabel(kr.status || 'on-track')}</span>
+                                                    <span class="okr-kr-meta-item okr-kr-confidence-badge okr-kr-confidence-${(kr.confidence || 'Medium').toLowerCase()}">Confidence: ${kr.confidence || 'Medium'}</span>
                                                     <span class="okr-kr-meta-item okr-kr-weight-badge">Weight: ${kr.weight || 100}%</span>
                                                     ${(kr.created || kr.createdAt) ? `<span class="okr-kr-meta-item">Created: ${this.formatDateOnly(kr.created || kr.createdAt)}</span>` : ''}
                                                     ${kr.startDate ? `<span class="okr-kr-meta-item">Start: ${kr.startDate}</span>` : ''}
                                                     ${kr.targetDate ? `<span class="okr-kr-meta-item">Target: ${kr.targetDate}</span>` : ''}
                                                     ${kr.lastCheckin ? `<span class="okr-kr-meta-item">Last Check-in: ${kr.lastCheckin}</span>` : ''}
                                                 </div>
+                                                ${kr.evidence ? `<div class="okr-kr-evidence-section"><label class="okr-kr-section-label">Evidence:</label><div class="okr-kr-evidence-content">${this.escapeHtml(kr.evidence)}</div></div>` : ''}
+                                                ${kr.comments ? `<div class="okr-kr-comments-section"><label class="okr-kr-section-label">Comments:</label><div class="okr-kr-comments-content">${this.escapeHtml(kr.comments)}</div></div>` : ''}
                                                 <div class="okr-kr-progress-row">
                                                     <div class="okr-kr-progress-bar">
                                                         <div class="okr-kr-progress-fill" style="width: ${krProgress}%"></div>
@@ -1008,7 +1224,25 @@ class OKRTracker {
             const obj = this.data.objectives.find(o => o.id === editId);
             if (obj) {
                 const oldWeight = obj.weight;
+                const changes = {};
+                
+                // Track all possible changes
+                if (obj.title !== formData.title) changes.title = { from: obj.title, to: formData.title };
+                if (obj.group !== formData.group) changes.group = { from: obj.group, to: formData.group };
+                if (obj.year !== formData.year) changes.year = { from: obj.year, to: formData.year };
+                if (obj.quarter !== formData.quarter) changes.quarter = { from: obj.quarter, to: formData.quarter };
+                if (obj.purpose !== formData.purpose) changes.purpose = { from: obj.purpose || '', to: formData.purpose || '' };
+                if (obj.startDate !== formData.startDate) changes.startDate = { from: obj.startDate || '', to: formData.startDate || '' };
+                if (obj.targetDate !== formData.targetDate) changes.targetDate = { from: obj.targetDate || '', to: formData.targetDate || '' };
+                if (obj.weight !== formData.weight) changes.weight = { from: obj.weight, to: formData.weight };
+                if (obj.lastCheckin !== formData.lastCheckin) changes.lastCheckin = { from: obj.lastCheckin || '', to: formData.lastCheckin || '' };
+                
                 Object.assign(obj, formData);
+                
+                // Track changes in history (record if any field changed)
+                if (Object.keys(changes).length > 0) {
+                    this.addHistoryEntry('updated', 'objective', editId, formData.title, changes, formData.group);
+                }
                 
                 // If weight changed, balance other objectives
                 if (oldWeight !== formData.weight) {
@@ -1018,8 +1252,9 @@ class OKRTracker {
         } else {
             // Add new objective
             const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            const newId = this.generateId();
             this.data.objectives.push({
-                id: this.generateId(),
+                id: newId,
                 ...formData,
                 weight: 0, // Will be balanced
                 keyResults: [],
@@ -1027,8 +1262,11 @@ class OKRTracker {
             });
             // Auto-balance all objective weights
             this.autoBalanceObjectiveWeights();
+            // Track creation in history
+            this.addHistoryEntry('created', 'objective', newId, formData.title, { created: true }, formData.group);
         }
         
+        this.recordProgressSnapshot(); // Record snapshot before saving
         await this.saveData();
         this.renderObjectives();
         document.getElementById('okr-objective-modal').classList.remove('active');
@@ -1039,9 +1277,14 @@ class OKRTracker {
      */
     async deleteObjective(id) {
         if (!confirm('Delete this objective and all its key results?')) return;
+        const obj = this.data.objectives.find(o => o.id === id);
+        if (obj) {
+            this.addHistoryEntry('deleted', 'objective', id, obj.title, { deleted: true }, obj.group);
+        }
         this.data.objectives = this.data.objectives.filter(obj => obj.id !== id);
         // Re-balance weights after deletion
         this.autoBalanceObjectiveWeights();
+        this.recordProgressSnapshot(); // Record snapshot before saving
         await this.saveData();
         this.renderObjectives();
     }
@@ -1067,7 +1310,10 @@ class OKRTracker {
                 document.getElementById('okr-kr-target-date').value = kr.targetDate || '';
                 document.getElementById('okr-kr-weight').value = kr.weight || 100;
                 document.getElementById('okr-kr-status').value = kr.status || 'on-track';
+                document.getElementById('okr-kr-confidence').value = kr.confidence || 'Medium';
                 document.getElementById('okr-kr-last-checkin').value = kr.lastCheckin || '';
+                document.getElementById('okr-kr-evidence').value = kr.evidence || '';
+                document.getElementById('okr-kr-comments').value = kr.comments || '';
             }
         } else {
             document.getElementById('okr-kr-modal-title').textContent = 'Add Key Result';
@@ -1078,7 +1324,10 @@ class OKRTracker {
             document.getElementById('okr-kr-target-date').value = '';
             document.getElementById('okr-kr-weight').value = '100';
             document.getElementById('okr-kr-status').value = 'on-track';
+            document.getElementById('okr-kr-confidence').value = 'Medium';
             document.getElementById('okr-kr-last-checkin').value = '';
+            document.getElementById('okr-kr-evidence').value = '';
+            document.getElementById('okr-kr-comments').value = '';
         }
         
         document.getElementById('okr-kr-modal').classList.add('active');
@@ -1097,7 +1346,10 @@ class OKRTracker {
         const targetDate = document.getElementById('okr-kr-target-date').value;
         const weight = parseInt(document.getElementById('okr-kr-weight').value);
         const status = document.getElementById('okr-kr-status').value;
+        const confidence = document.getElementById('okr-kr-confidence').value;
         const lastCheckin = document.getElementById('okr-kr-last-checkin').value;
+        const evidence = document.getElementById('okr-kr-evidence').value.trim();
+        const comments = document.getElementById('okr-kr-comments').value.trim();
         
         if (!title || !target || !startDate || !targetDate) {
             alert('Please fill in all required fields');
@@ -1124,7 +1376,27 @@ class OKRTracker {
                 kr.targetDate = targetDate;
                 kr.weight = weight;
                 kr.status = status;
+                kr.confidence = confidence;
                 kr.lastCheckin = lastCheckin;
+                kr.evidence = evidence;
+                kr.comments = comments;
+                
+                // Track changes in history (before updating)
+                const changes = {};
+                if (kr.title !== title) changes.title = { from: kr.title, to: title };
+                if (kr.status !== status) changes.status = { from: kr.status, to: status };
+                if ((kr.confidence || 'Medium') !== confidence) changes.confidence = { from: kr.confidence || 'Medium', to: confidence };
+                if (kr.target !== target) changes.target = { from: kr.target, to: target };
+                if ((kr.startDate || '') !== startDate) changes.startDate = { from: kr.startDate || '', to: startDate || '' };
+                if ((kr.targetDate || '') !== targetDate) changes.targetDate = { from: kr.targetDate || '', to: targetDate || '' };
+                if (kr.weight !== weight) changes.weight = { from: kr.weight, to: weight };
+                if ((kr.lastCheckin || '') !== lastCheckin) changes.lastCheckin = { from: kr.lastCheckin || '', to: lastCheckin || '' };
+                if ((kr.evidence || '') !== evidence) changes.evidence = { from: kr.evidence || '', to: evidence || '' };
+                if ((kr.comments || '') !== comments) changes.comments = { from: kr.comments || '', to: comments || '' };
+                
+                if (Object.keys(changes).length > 0) {
+                    this.addHistoryEntry('updated', 'keyresult', editId, title, changes, objective.group);
+                }
                 
                 // If weight changed, balance other KRs
                 if (oldWeight !== weight) {
@@ -1137,8 +1409,9 @@ class OKRTracker {
         } else {
             // Add new key result
             const today = new Date().toISOString().split('T')[0]; // Format as YYYY-MM-DD
+            const newKrId = this.generateId();
             objective.keyResults.push({
-                id: this.generateId(),
+                id: newKrId,
                 title: title,
                 target: target,
                 current: 0,
@@ -1146,13 +1419,19 @@ class OKRTracker {
                 targetDate: targetDate,
                 weight: 0, // Will be balanced
                 status: status,
+                confidence: confidence,
                 lastCheckin: lastCheckin,
+                evidence: evidence,
+                comments: comments,
                 created: today
             });
             // Auto-balance all KR weights for this objective
             this.autoBalanceKRWeights(objectiveId);
+            // Track creation in history
+            this.addHistoryEntry('created', 'keyresult', newKrId, title, { created: true }, objective.group);
         }
         
+        this.recordProgressSnapshot(); // Record snapshot before saving
         await this.saveData();
         this.renderObjectives();
         document.getElementById('okr-kr-modal').classList.remove('active');
@@ -1166,7 +1445,23 @@ class OKRTracker {
         if (objective) {
             const kr = objective.keyResults.find(k => k.id === krId);
             if (kr) {
+                const oldCurrent = kr.current;
+                const oldProgress = Math.min(100, Math.round((oldCurrent / kr.target) * 100));
                 kr.current = Math.max(0, Math.min(kr.target, kr.current + delta));
+                const newProgress = Math.min(100, Math.round((kr.current / kr.target) * 100));
+                
+                // Track progress change in history
+                if (oldCurrent !== kr.current) {
+                    this.addHistoryEntry('progress', 'keyresult', krId, kr.title, {
+                        progress: {
+                            from: `${oldCurrent}/${kr.target} (${oldProgress}%)`,
+                            to: `${kr.current}/${kr.target} (${newProgress}%)`,
+                            delta: delta
+                        }
+                    }, objective.group);
+                }
+                
+                this.recordProgressSnapshot(); // Record snapshot before saving
                 await this.saveData();
                 this.renderObjectives();
             }
@@ -1179,9 +1474,14 @@ class OKRTracker {
     async deleteKR(objectiveId, krId) {
         const objective = this.data.objectives.find(obj => obj.id === objectiveId);
         if (objective) {
+            const kr = objective.keyResults.find(k => k.id === krId);
+            if (kr) {
+                this.addHistoryEntry('deleted', 'keyresult', krId, kr.title, { deleted: true }, objective.group);
+            }
             objective.keyResults = objective.keyResults.filter(k => k.id !== krId);
             // Re-balance KR weights after deletion
             this.autoBalanceKRWeights(objectiveId);
+            this.recordProgressSnapshot(); // Record snapshot before saving
             await this.saveData();
             this.renderObjectives();
         }
@@ -1241,11 +1541,19 @@ class OKRTracker {
                     text += `\n  ${krIndex + 1}. ${kr.title}\n`;
                     text += `     ${'Progress:'.padEnd(15)} ${kr.current}/${kr.target} (${krProgress}%)\n`;
                     text += `     ${'Status:'.padEnd(15)} ${this.getStatusLabel(kr.status || 'on-track')}\n`;
+                    text += `     ${'Confidence:'.padEnd(15)} ${kr.confidence || 'Medium'}\n`;
+                    text += `     ${'Weight:'.padEnd(15)} ${kr.weight || 100}%\n`;
                     const krCreatedDate = kr.created || kr.createdAt;
                     text += `     ${'Created:'.padEnd(15)} ${krCreatedDate ? this.formatDateOnly(krCreatedDate) : 'N/A'}\n`;
-                    text += `     ${'Last Check-in:'.padEnd(15)} ${kr.lastCheckin || 'N/A'}\n`;
                     if (kr.startDate && kr.targetDate) {
                         text += `     ${'Period:'.padEnd(15)} ${kr.startDate} >> ${kr.targetDate}\n`;
+                    }
+                    text += `     ${'Last Check-in:'.padEnd(15)} ${kr.lastCheckin || 'N/A'}\n`;
+                    if (kr.evidence) {
+                        text += `     Evidence:\n${kr.evidence.split('\n').map(line => `        ${line}`).join('\n')}\n`;
+                    }
+                    if (kr.comments) {
+                        text += `     Comments:\n${kr.comments.split('\n').map(line => `        ${line}`).join('\n')}\n`;
                     }
                 });
             }
@@ -1262,6 +1570,532 @@ class OKRTracker {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Open progress trends modal
+     */
+    openProgressTrendsModal() {
+        this.setupProgressTrendsFilters();
+        this.renderProgressTrends();
+        document.getElementById('okr-progress-trends-modal').classList.add('active');
+    }
+
+    /**
+     * Render progress trends visualization
+     */
+    renderProgressTrends() {
+        const container = document.getElementById('okr-progress-trends-charts');
+        if (!container) return;
+        
+        // Get progress snapshots from history
+        const snapshots = (this.data.history || []).filter(h => h.type === 'progress-snapshot' && h.changes && h.changes.snapshot);
+        
+        if (snapshots.length === 0) {
+            container.innerHTML = `
+                <div class="okr-empty-state">
+                    <span>📈</span>
+                    <p>No progress history available yet. Progress will be tracked as you update your OKRs.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Check which view mode is selected
+        const viewMode = document.querySelector('input[name="okr-trends-view"]:checked')?.value || 'grouped';
+        const individualFilters = document.getElementById('okr-trends-individual-filters');
+        if (individualFilters) {
+            individualFilters.style.display = viewMode === 'individual' ? 'flex' : 'none';
+        }
+        
+        if (viewMode === 'grouped') {
+            this.renderGroupedProgressTrends(container, snapshots);
+        } else {
+            this.renderIndividualProgressTrends(container, snapshots);
+        }
+    }
+
+    /**
+     * Render grouped progress trends (one chart for Personal, Team, Company)
+     */
+    renderGroupedProgressTrends(container, snapshots) {
+        const groups = ['Personal', 'Team', 'Company'];
+        const groupColors = {
+            'Personal': '#10b981',
+            'Team': '#eab308',
+            'Company': '#3b82f6'
+        };
+        
+        // Extract progress data by group
+        const groupProgressData = {};
+        groups.forEach(group => {
+            groupProgressData[group] = [];
+        });
+        
+        const existingObjectiveIds = new Set((this.data.objectives || []).map(obj => obj.id));
+        const currentGroupsWithObjectives = new Set();
+        (this.data.objectives || []).forEach(obj => {
+            currentGroupsWithObjectives.add(obj.group || 'Personal');
+        });
+        
+        snapshots.forEach(snapshot => {
+            const date = new Date(snapshot.timestamp).toLocaleDateString();
+            const snapshotData = snapshot.changes.snapshot;
+            
+            groups.forEach(group => {
+                if (!currentGroupsWithObjectives.has(group)) return;
+                
+                let totalProgress = 0;
+                let count = 0;
+                
+                Object.keys(snapshotData.objectives).forEach(objId => {
+                    if (!existingObjectiveIds.has(objId)) return;
+                    
+                    const objData = snapshotData.objectives[objId];
+                    if (objData.group === group) {
+                        totalProgress += objData.progress;
+                        count++;
+                    }
+                });
+                
+                if (count > 0) {
+                    const avgProgress = Math.round(totalProgress / count);
+                    groupProgressData[group].push({
+                        date: date,
+                        progress: avgProgress,
+                        timestamp: snapshot.timestamp,
+                        count: count
+                    });
+                }
+            });
+        });
+        
+        // Sort data points by timestamp for each group
+        groups.forEach(group => {
+            groupProgressData[group].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+        });
+        
+        // Find all unique dates
+        const allDates = new Set();
+        groups.forEach(group => {
+            groupProgressData[group].forEach(point => allDates.add(point.timestamp));
+        });
+        const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
+        
+        if (sortedDates.length === 0) {
+            container.innerHTML = `
+                <div class="okr-empty-state">
+                    <span>📈</span>
+                    <p>No data matches the selected filters.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Create a single chart with all groups
+        const chartHeight = 300;
+        const chartWidth = 800;
+        const padding = 50;
+        const usableWidth = chartWidth - (padding * 2);
+        const usableHeight = chartHeight - (padding * 2);
+        const maxProgress = 100;
+        
+        // Generate paths for each group
+        const paths = groups.map(group => {
+            const dataPoints = groupProgressData[group];
+            if (dataPoints.length === 0) return null;
+            
+            let pathData = '';
+            dataPoints.forEach((point, index) => {
+                const dateIndex = sortedDates.indexOf(point.timestamp);
+                const x = padding + (dateIndex / (sortedDates.length - 1 || 1)) * usableWidth;
+                const y = padding + usableHeight - (point.progress / maxProgress) * usableHeight;
+                
+                if (index === 0) {
+                    pathData += `M ${x} ${y}`;
+                } else {
+                    pathData += ` L ${x} ${y}`;
+                }
+            });
+            
+            return { group, pathData, dataPoints, color: groupColors[group] };
+        }).filter(p => p !== null);
+        
+        // Generate points for tooltips
+        const allPoints = [];
+        paths.forEach(path => {
+            path.dataPoints.forEach((point, index) => {
+                const dateIndex = sortedDates.indexOf(point.timestamp);
+                const x = padding + (dateIndex / (sortedDates.length - 1 || 1)) * usableWidth;
+                const y = padding + usableHeight - (point.progress / maxProgress) * usableHeight;
+                allPoints.push({ x, y, progress: point.progress, date: point.date, group: path.group, count: point.count });
+            });
+        });
+        
+        container.innerHTML = `
+            <div class="okr-trend-chart-container">
+                <div class="okr-trend-chart-header">
+                    <h4>Overall Progress by Category</h4>
+                </div>
+                <div class="okr-trend-chart-wrapper">
+                    <svg class="okr-trend-chart" viewBox="0 0 ${chartWidth} ${chartHeight}">
+                        <!-- Grid lines -->
+                        ${[0, 25, 50, 75, 100].map(percent => {
+                            const y = padding + usableHeight - (percent / maxProgress) * usableHeight;
+                            return `<line x1="${padding}" y1="${y}" x2="${chartWidth - padding}" y2="${y}" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="2,2" opacity="0.3"/>`;
+                        }).join('')}
+                        
+                        <!-- Progress lines for each group -->
+                        ${paths.map(path => `
+                            <path d="${path.pathData}" fill="none" stroke="${path.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        `).join('')}
+                        
+                        <!-- Data points -->
+                        ${allPoints.map(p => `
+                            <circle cx="${p.x}" cy="${p.y}" r="4" fill="${groupColors[p.group]}" stroke="rgba(30,30,30,0.95)" stroke-width="2">
+                                <title>${p.group}: ${p.date} - ${p.progress}% (${p.count} objective${p.count !== 1 ? 's' : ''})</title>
+                            </circle>
+                        `).join('')}
+                        
+                        <!-- Y-axis labels -->
+                        ${[0, 25, 50, 75, 100].map(percent => {
+                            const y = padding + usableHeight - (percent / maxProgress) * usableHeight;
+                            return `<text x="${padding - 10}" y="${y + 4}" text-anchor="end" font-size="10" fill="rgba(255,255,255,0.6)">${percent}%</text>`;
+                        }).join('')}
+                        
+                        <!-- X-axis labels -->
+                        ${sortedDates.map((timestamp, index) => {
+                            const date = new Date(timestamp).toLocaleDateString();
+                            const x = padding + (index / (sortedDates.length - 1 || 1)) * usableWidth;
+                            const showLabel = index === 0 || index === sortedDates.length - 1 || sortedDates.length <= 5;
+                            if (!showLabel) return '';
+                            return `<text x="${x}" y="${chartHeight - padding + 20}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.6)">${date}</text>`;
+                        }).join('')}
+                    </svg>
+                </div>
+                <div class="okr-trend-chart-legend">
+                    ${paths.map(path => `
+                        <div class="okr-trend-legend-item">
+                            <span class="okr-trend-legend-color" style="background: ${path.color}"></span>
+                            <span class="okr-trend-legend-label">${path.group}</span>
+                            ${path.dataPoints.length > 0 ? `
+                                <span class="okr-trend-legend-value">${path.dataPoints[path.dataPoints.length - 1].progress}%</span>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Render individual progress trends
+     */
+    renderIndividualProgressTrends(container, snapshots) {
+        const filterGroup = document.getElementById('okr-trends-filter-group')?.value || 'all';
+        const filterObjective = document.getElementById('okr-trends-filter-objective')?.value || 'all';
+        
+        // Extract progress data - only for objectives that still exist
+        const progressData = {};
+        const existingObjectiveIds = new Set((this.data.objectives || []).map(obj => obj.id));
+        
+        snapshots.forEach(snapshot => {
+            const date = new Date(snapshot.timestamp).toLocaleDateString();
+            const snapshotData = snapshot.changes.snapshot;
+            
+            Object.keys(snapshotData.objectives).forEach(objId => {
+                if (!existingObjectiveIds.has(objId)) return;
+                
+                const objData = snapshotData.objectives[objId];
+                
+                // Apply filters
+                if (filterGroup !== 'all' && objData.group !== filterGroup) return;
+                if (filterObjective !== 'all' && objId !== filterObjective) return;
+                
+                if (!progressData[objId]) {
+                    const currentObj = this.data.objectives.find(o => o.id === objId);
+                    progressData[objId] = {
+                        title: currentObj ? currentObj.title : objData.title,
+                        group: objData.group,
+                        dataPoints: []
+                    };
+                }
+                
+                progressData[objId].dataPoints.push({
+                    date: date,
+                    progress: objData.progress,
+                    timestamp: snapshot.timestamp
+                });
+            });
+        });
+        
+        if (Object.keys(progressData).length === 0) {
+            container.innerHTML = `
+                <div class="okr-empty-state">
+                    <span>📈</span>
+                    <p>No data matches the selected filters.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Update objective filter dropdown
+        this.updateTrendsObjectiveFilter(progressData, filterObjective);
+        
+        // Render charts
+        container.innerHTML = Object.keys(progressData).map(objId => {
+            const objData = progressData[objId];
+            const dataPoints = objData.dataPoints.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+            
+            if (dataPoints.length === 0) return '';
+            
+            const maxProgress = Math.max(...dataPoints.map(d => d.progress), 100);
+            const chartHeight = 200;
+            const chartWidth = 600;
+            const padding = 40;
+            const usableWidth = chartWidth - (padding * 2);
+            const usableHeight = chartHeight - (padding * 2);
+            
+            // Generate SVG path for line chart
+            let pathData = '';
+            dataPoints.forEach((point, index) => {
+                const x = padding + (index / (dataPoints.length - 1 || 1)) * usableWidth;
+                const y = padding + usableHeight - (point.progress / maxProgress) * usableHeight;
+                
+                if (index === 0) {
+                    pathData += `M ${x} ${y}`;
+                } else {
+                    pathData += ` L ${x} ${y}`;
+                }
+            });
+            
+            // Generate points
+            const points = dataPoints.map((point, index) => {
+                const x = padding + (index / (dataPoints.length - 1 || 1)) * usableWidth;
+                const y = padding + usableHeight - (point.progress / maxProgress) * usableHeight;
+                return { x, y, progress: point.progress, date: point.date };
+            });
+            
+            return `
+                <div class="okr-trend-chart-container">
+                    <div class="okr-trend-chart-header">
+                        <h4>${this.escapeHtml(objData.title)}</h4>
+                        <span class="okr-trend-group-badge okr-trend-group-${objData.group.toLowerCase()}">${objData.group}</span>
+                    </div>
+                    <div class="okr-trend-chart-wrapper">
+                        <svg class="okr-trend-chart" viewBox="0 0 ${chartWidth} ${chartHeight}">
+                            <!-- Grid lines -->
+                            ${[0, 25, 50, 75, 100].map(percent => {
+                                const y = padding + usableHeight - (percent / maxProgress) * usableHeight;
+                                return `<line x1="${padding}" y1="${y}" x2="${chartWidth - padding}" y2="${y}" stroke="rgba(255,255,255,0.2)" stroke-width="1" stroke-dasharray="2,2" opacity="0.3"/>`;
+                            }).join('')}
+                            
+                            <!-- Progress line -->
+                            <path d="${pathData}" fill="none" stroke="#667eea" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                            
+                            <!-- Data points -->
+                            ${points.map(p => `
+                                <circle cx="${p.x}" cy="${p.y}" r="4" fill="#667eea" stroke="rgba(30,30,30,0.95)" stroke-width="2">
+                                    <title>${p.date}: ${p.progress}%</title>
+                                </circle>
+                            `).join('')}
+                            
+                            <!-- Y-axis labels -->
+                            ${[0, 25, 50, 75, 100].map(percent => {
+                                const y = padding + usableHeight - (percent / maxProgress) * usableHeight;
+                                return `<text x="${padding - 10}" y="${y + 4}" text-anchor="end" font-size="10" fill="rgba(255,255,255,0.6)">${percent}%</text>`;
+                            }).join('')}
+                            
+                            <!-- X-axis labels -->
+                            ${dataPoints.map((point, index) => {
+                                const x = padding + (index / (dataPoints.length - 1 || 1)) * usableWidth;
+                                const showLabel = index === 0 || index === dataPoints.length - 1 || dataPoints.length <= 5;
+                                if (!showLabel) return '';
+                                return `<text x="${x}" y="${chartHeight - padding + 20}" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.6)">${point.date}</text>`;
+                            }).join('')}
+                        </svg>
+                    </div>
+                    <div class="okr-trend-chart-stats">
+                        <div class="okr-trend-stat">
+                            <span class="okr-trend-stat-label">Current:</span>
+                            <span class="okr-trend-stat-value">${dataPoints[dataPoints.length - 1].progress}%</span>
+                        </div>
+                        ${dataPoints.length > 1 ? `
+                            <div class="okr-trend-stat">
+                                <span class="okr-trend-stat-label">Change:</span>
+                                <span class="okr-trend-stat-value ${dataPoints[dataPoints.length - 1].progress >= dataPoints[0].progress ? 'okr-trend-positive' : 'okr-trend-negative'}">
+                                    ${dataPoints[dataPoints.length - 1].progress >= dataPoints[0].progress ? '+' : ''}${dataPoints[dataPoints.length - 1].progress - dataPoints[0].progress}%
+                                </span>
+                            </div>
+                            <div class="okr-trend-stat">
+                                <span class="okr-trend-stat-label">Data Points:</span>
+                                <span class="okr-trend-stat-value">${dataPoints.length}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Update trends objective filter dropdown
+     */
+    updateTrendsObjectiveFilter(progressData, selectedId) {
+        const filterSelect = document.getElementById('okr-trends-filter-objective');
+        if (!filterSelect) return;
+        
+        const currentValue = filterSelect.value;
+        filterSelect.innerHTML = '<option value="all">All Objectives</option>';
+        
+        Object.keys(progressData).forEach(objId => {
+            const obj = this.data.objectives.find(o => o.id === objId);
+            if (obj) {
+                const option = document.createElement('option');
+                option.value = objId;
+                option.textContent = obj.title;
+                if (objId === currentValue) {
+                    option.selected = true;
+                }
+                filterSelect.appendChild(option);
+            }
+        });
+    }
+
+    /**
+     * Set up progress trends filter listeners
+     */
+    setupProgressTrendsFilters() {
+        const groupFilter = document.getElementById('okr-trends-filter-group');
+        const objectiveFilter = document.getElementById('okr-trends-filter-objective');
+        const viewModeRadios = document.querySelectorAll('input[name="okr-trends-view"]');
+        
+        if (groupFilter) {
+            groupFilter.addEventListener('change', () => {
+                this.renderProgressTrends();
+            });
+        }
+        if (objectiveFilter) {
+            objectiveFilter.addEventListener('change', () => {
+                this.renderProgressTrends();
+            });
+        }
+        if (viewModeRadios.length > 0) {
+            viewModeRadios.forEach(radio => {
+                radio.addEventListener('change', () => {
+                    this.renderProgressTrends();
+                });
+            });
+        }
+    }
+
+    /**
+     * Open history modal
+     */
+    openHistoryModal() {
+        this.renderHistory();
+        document.getElementById('okr-history-modal').classList.add('active');
+    }
+
+    /**
+     * Render history view
+     */
+    renderHistory() {
+        const container = document.getElementById('okr-history-list');
+        if (!container) return;
+        
+        if (!this.data.history || this.data.history.length === 0) {
+            container.innerHTML = `
+                <div class="okr-empty-state">
+                    <span>📊</span>
+                    <p>No history available yet. Changes will be tracked as you work with your OKRs.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        const filterType = document.getElementById('okr-history-filter-type')?.value || 'all';
+        const filterGroup = document.getElementById('okr-history-filter-group')?.value || 'all';
+        
+        let filteredHistory = this.data.history;
+        
+        if (filterType !== 'all') {
+            filteredHistory = filteredHistory.filter(entry => entry.itemType === filterType);
+        }
+        
+        if (filterGroup !== 'all') {
+            filteredHistory = filteredHistory.filter(entry => entry.group === filterGroup);
+        }
+        
+        if (filteredHistory.length === 0) {
+            container.innerHTML = `
+                <div class="okr-empty-state">
+                    <span>📊</span>
+                    <p>No history matches the selected filters.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = filteredHistory.map(entry => {
+            const date = new Date(entry.timestamp);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+            const typeIcon = entry.itemType === 'objective' ? '🎯' : '📊';
+            const typeLabel = entry.itemType === 'objective' ? 'Objective' : 'Key Result';
+            
+            let changeDescription = '';
+            if (entry.type === 'created') {
+                changeDescription = '';
+            } else if (entry.type === 'deleted') {
+                changeDescription = '';
+            } else if (entry.type === 'progress') {
+                changeDescription = `${entry.changes.progress.from} → ${entry.changes.progress.to}`;
+            } else if (entry.type === 'updated') {
+                const changeList = Object.keys(entry.changes).map(key => {
+                    const change = entry.changes[key];
+                    if (key === 'status') {
+                        return `${key}: ${this.getStatusLabel(change.from)} → ${this.getStatusLabel(change.to)}`;
+                    }
+                    return `${key}: ${change.from} → ${change.to}`;
+                }).join(', ');
+                changeDescription = changeList;
+            }
+            
+            return `
+                <div class="okr-history-entry">
+                    <div class="okr-history-entry-header">
+                        <span class="okr-history-type-icon">${typeIcon}</span>
+                        <span class="okr-history-item-type">${typeLabel}</span>
+                        <span class="okr-history-item-title">${this.escapeHtml(entry.itemTitle)}</span>
+                        ${entry.group ? `<span class="okr-history-group-badge okr-history-group-${entry.group.toLowerCase()}">${entry.group}</span>` : ''}
+                        <span class="okr-history-timestamp">${dateStr}</span>
+                    </div>
+                    <div class="okr-history-entry-details">
+                        <span class="okr-history-change-type okr-history-change-${entry.type}">${entry.type.charAt(0).toUpperCase() + entry.type.slice(1)}</span>
+                        <span class="okr-history-change-description">${changeDescription}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Set up history filter listeners
+     */
+    setupHistoryFilters() {
+        const typeFilter = document.getElementById('okr-history-filter-type');
+        const groupFilter = document.getElementById('okr-history-filter-group');
+        
+        if (typeFilter) {
+            typeFilter.addEventListener('change', () => {
+                this.renderHistory();
+            });
+        }
+        if (groupFilter) {
+            groupFilter.addEventListener('change', () => {
+                this.renderHistory();
+            });
+        }
     }
 }
 
