@@ -1,6 +1,5 @@
 /**
  * OKR Tracker Module for JINRA
- * Based on ~/Lab/okr-tracker project
  * Tracks Objectives and Key Results with progress tracking
  */
 
