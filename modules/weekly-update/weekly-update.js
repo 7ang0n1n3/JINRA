@@ -12,7 +12,7 @@ class WeeklyUpdate {
                 id: 1,
                 date: new Date().toISOString().split('T')[0],
                 region: 'JAPAN',
-                entries: [{ title: '', content: '', county: 'N/A', process: 'DR' }]
+                entries: [{ title: '', content: '', county: 'N/A', process: 'DR', type: 'Info' }]
             }
         ];
         this.activeSectionId = 1;
@@ -183,7 +183,7 @@ class WeeklyUpdate {
     addEntry() {
         const section = this.getActiveSection();
         if (section) {
-            section.entries.push({ title: '', content: '', county: 'N/A', process: 'DR' });
+            section.entries.push({ title: '', content: '', county: 'N/A', process: 'DR', type: 'Info' });
             this.activeEntryIndex = section.entries.length - 1; // Switch to new entry
             this.saveData();
             this.renderAndAttach();
@@ -231,15 +231,15 @@ class WeeklyUpdate {
     }
 
     /**
-     * Update entry field (county, process)
+     * Update entry field (process)
      */
     updateEntryField(index, field, value) {
         const section = this.getActiveSection();
         if (section && section.entries[index]) {
             section.entries[index][field] = value;
             this.saveData();
-            // Re-render to update tab labels when process or county changes
-            if (field === 'process' || field === 'county') {
+            // Re-render to update tab labels when process changes
+            if (field === 'process') {
                 this.renderAndAttach();
             }
         }
@@ -265,7 +265,7 @@ class WeeklyUpdate {
                 id: 1,
                 date: new Date().toISOString().split('T')[0],
                 region: 'JAPAN',
-                entries: [{ title: '', content: '', county: 'N/A', process: 'DR' }]
+                entries: [{ title: '', content: '', county: 'N/A', process: 'DR', type: 'Info' }]
             }
         ];
         this.activeSectionId = 1;
@@ -341,11 +341,11 @@ class WeeklyUpdate {
             text += `REGION  : ${section.region}\n\n`;
 
             section.entries.forEach(entry => {
-                // Export entry if it has title, content, county, or process
-                const hasData = entry.title.trim() || entry.content.trim() || (entry.county && entry.county.trim() !== 'N/A') || (entry.process && entry.process.trim() !== 'DR');
+                // Export entry if it has title, content, or process
+                const hasData = entry.title.trim() || entry.content.trim() || (entry.process && entry.process.trim() !== 'DR');
                 if (hasData) {
-                    text += `\tCOUNTRY : ${entry.county || 'N/A'}\n`;
                     text += `\tPROCESS : ${entry.process || 'DR'}\n`;
+                    text += `\tTYPE    : ${entry.type || 'Info'}\n`;
                     text += `\tTITLE   : ${entry.title || ''}\n`;
                     
                     // Format detail - first line on same line as DETAIL label, subsequent lines aligned
@@ -386,14 +386,229 @@ class WeeklyUpdate {
     }
 
     /**
+     * Build Outlook-friendly HTML body for clipboard/email exports.
+     * Uses simple HTML and <font color> for best compatibility.
+     */
+    buildOutlookHtmlBody() {
+        let html = '';
+
+        const fontBase = 'font-family: Calibri, Arial, sans-serif; font-size: 12pt; color: #000;';
+        const cellBase = 'border: 1px solid #000; padding: 6px 10px; vertical-align: top;';
+
+        this.sections.forEach((section, sectionIndex) => {
+            if (sectionIndex > 0) {
+                html += '<div style="height: 18px;"></div>';
+            }
+
+            const weekNumber = this.getWeekOfYear(section.date);
+            const dateText = `${section.date} (Week ${weekNumber})`;
+
+            // One header per section (DATE | REGION), then child blocks for each entry
+            html += `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="${fontBase} border-collapse: collapse; table-layout: fixed;">`;
+
+            // Header row: DATE | REGION (only once per section)
+            html += `<tr>`;
+            html += `<td style="${cellBase} width: 50%;"><b>DATE</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${this.escapeHtml(dateText)}</td>`;
+            html += `<td style="${cellBase} width: 50%;"><b>REGION</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${this.escapeHtml(section.region || '')}</td>`;
+            html += `</tr>`;
+
+            let hasAnyEntry = false;
+            (section.entries || []).forEach((entry, entryIndex) => {
+                const hasData = entry.title.trim() || entry.content.trim() || (entry.process && entry.process.trim() !== 'DR');
+                if (!hasData) return;
+                hasAnyEntry = true;
+
+                const entryType = entry.type || 'Info';
+                let typeColor = '#008000'; // default green
+                if (entryType === 'Action') typeColor = '#0000FF';
+                else if (entryType === 'Urgent') typeColor = '#FF0000';
+
+                const processText = this.escapeHtml(entry.process || 'DR');
+                const titleText = this.escapeHtml(entry.title || '');
+                const detailHtml = this.escapeHtml(entry.content || '').replace(/\n/g, '<br>');
+
+                // Spacer between child entries
+                html += `<tr><td colspan="2" style="height: ${entryIndex === 0 ? 12 : 16}px;"></td></tr>`;
+
+                // Child row: TYPE | PROCESS
+                html += `<tr>`;
+                html += `<td style="${cellBase} width: 50%;"><b><font color="${typeColor}">${this.escapeHtml(entryType.toUpperCase())}</font></b></td>`;
+                html += `<td style="${cellBase} width: 50%;"><b>${processText}</b></td>`;
+                html += `</tr>`;
+
+                // Child big box: TITLE/DETAIL
+                html += `<tr>`;
+                html += `<td colspan="2" style="${cellBase} padding: 0;">`;
+                html += `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="${fontBase} border-collapse: collapse; table-layout: fixed;">`;
+                html += `<tr>`;
+                html += `<td style="width: 120px; ${cellBase} border-left: 0; border-top: 0; border-bottom: 0;"><b>TITLE</b></td>`;
+                html += `<td style="${cellBase} border-right: 0; border-top: 0; border-bottom: 0;">${titleText}</td>`;
+                html += `</tr>`;
+                html += `<tr>`;
+                // Keep the DETAIL row, but remove the "DETAIL" label and the horizontal divider between TITLE and DETAIL
+                html += `<td style="width: 120px; ${cellBase} border-left: 0; border-top: 0; border-bottom: 0;">&nbsp;</td>`;
+                html += `<td style="${cellBase} border-right: 0; border-top: 0; border-bottom: 0; padding: 14px 10px; line-height: 1.25;">${detailHtml}</td>`;
+                html += `</tr>`;
+                html += `</table>`;
+                html += `</td>`;
+                html += `</tr>`;
+            });
+
+            if (!hasAnyEntry) {
+                // Keep a little space if there were no child entries (rare, but avoids empty-looking header)
+                html += `<tr><td colspan="2" style="height: 10px;"></td></tr>`;
+            }
+
+            html += `</table>`;
+        });
+
+        return html;
+    }
+
+    /**
+     * Export an .eml file that Outlook can open as a ready-to-send email.
+     * This is more reliable than clipboard for preserving colors.
+     */
+    exportToOutlookEml() {
+        const firstDate = this.sections[0]?.date || new Date().toISOString().split('T')[0];
+        const htmlBody = this.buildOutlookHtmlBody();
+        const subject = `Weekly Update - ${firstDate}`;
+
+        // Use CRLF per RFC822
+        const eml =
+            `To: \r\n` +
+            `Subject: ${subject}\r\n` +
+            `MIME-Version: 1.0\r\n` +
+            `Content-Type: text/html; charset="UTF-8"\r\n` +
+            `Content-Transfer-Encoding: 8bit\r\n` +
+            `\r\n` +
+            `<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body>` +
+            htmlBody +
+            `</body></html>`;
+
+        const blob = new Blob([eml], { type: 'message/rfc822' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Weekly-Update-${firstDate.replace(/\//g, '-')}.eml`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    /**
+     * Copy to clipboard as HTML for Outlook email
+     */
+    copyToClipboardForOutlook() {
+        const html = this.buildOutlookHtmlBody();
+
+        // Generate plain text version for fallback
+        let text = '';
+        this.sections.forEach((section, sectionIndex) => {
+            if (sectionIndex > 0) {
+                text += '\n\n';
+            }
+            const weekNumber = this.getWeekOfYear(section.date);
+            text += `DATE : ${section.date} (Week ${weekNumber})\n\n`;
+            text += `REGION  : ${section.region}\n\n`;
+            section.entries.forEach(entry => {
+                const hasData = entry.title.trim() || entry.content.trim() || (entry.process && entry.process.trim() !== 'DR');
+                if (hasData) {
+                    text += `\tPROCESS : ${entry.process || 'DR'}\n`;
+                    text += `\tTYPE    : ${entry.type || 'Info'}\n`;
+                    text += `\tTITLE   : ${entry.title || ''}\n`;
+                    const contentLines = entry.content.split('\n');
+                    if (contentLines.length > 0 && contentLines[0].trim()) {
+                        text += `\tDETAIL  : ${contentLines[0]}\n`;
+                        const indent = ' '.repeat(14);
+                        for (let i = 1; i < contentLines.length; i++) {
+                            text += `${indent}${contentLines[i]}\n`;
+                        }
+                    } else {
+                        text += `\tDETAIL  :\n`;
+                    }
+                    text += '\n';
+                }
+            });
+        });
+
+        // Use a more reliable method for Outlook: create a temporary div with HTML content
+        // and use execCommand to copy it, which preserves formatting better in Outlook
+        const tempDiv = document.createElement('div');
+        tempDiv.style.position = 'fixed';
+        tempDiv.style.left = '-9999px';
+        tempDiv.style.top = '-9999px';
+        tempDiv.innerHTML = html;
+        document.body.appendChild(tempDiv);
+        
+        // Select the content
+        const range = document.createRange();
+        range.selectNodeContents(tempDiv);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        
+        try {
+            // Try modern Clipboard API first with both HTML and text
+            if (navigator.clipboard && navigator.clipboard.write) {
+                const htmlBlob = new Blob([html], { type: 'text/html' });
+                const textBlob = new Blob([text], { type: 'text/plain' });
+                const clipboardItem = new ClipboardItem({
+                    'text/html': htmlBlob,
+                    'text/plain': textBlob
+                });
+                
+                navigator.clipboard.write([clipboardItem]).then(() => {
+                    document.body.removeChild(tempDiv);
+                    selection.removeAllRanges();
+                    alert('Content copied to clipboard! You can now paste it directly into Outlook.\n\nTip: In Outlook, paste using Ctrl+V (or Cmd+V on Mac) to paste with formatting.');
+                }).catch(() => {
+                    // Fallback to execCommand
+                    document.execCommand('copy');
+                    document.body.removeChild(tempDiv);
+                    selection.removeAllRanges();
+                    alert('Content copied to clipboard! You can now paste it directly into Outlook.\n\nTip: In Outlook, paste using Ctrl+V (or Cmd+V on Mac) to paste with formatting.');
+                });
+            } else {
+                // Fallback to execCommand
+                document.execCommand('copy');
+                document.body.removeChild(tempDiv);
+                selection.removeAllRanges();
+                alert('Content copied to clipboard! You can now paste it directly into Outlook.\n\nTip: In Outlook, paste using Ctrl+V (or Cmd+V on Mac) to paste with formatting.');
+            }
+        } catch (err) {
+            document.body.removeChild(tempDiv);
+            selection.removeAllRanges();
+            alert('Failed to copy to clipboard. Please try the text export instead.');
+        }
+    }
+
+    /**
      * Attach event listeners
      */
     attachEventListeners() {
-        // Export button
-        const exportBtn = document.getElementById('wu-export-btn');
-        if (exportBtn) {
-            exportBtn.addEventListener('click', () => {
+        // Export text button
+        const exportTextBtn = document.getElementById('wu-export-text-btn');
+        if (exportTextBtn) {
+            exportTextBtn.addEventListener('click', () => {
                 this.exportToText();
+            });
+        }
+
+        // Export .eml for Outlook button
+        const exportEmlBtn = document.getElementById('wu-export-eml-btn');
+        if (exportEmlBtn) {
+            exportEmlBtn.addEventListener('click', () => {
+                this.exportToOutlookEml();
+            });
+        }
+
+        // Copy to clipboard for Outlook button
+        const copyToClipboardBtn = document.getElementById('wu-copy-clipboard-btn');
+        if (copyToClipboardBtn) {
+            copyToClipboardBtn.addEventListener('click', () => {
+                this.copyToClipboardForOutlook();
             });
         }
 
@@ -465,25 +680,10 @@ class WeeklyUpdate {
         // Active entry title and content inputs
         const activeEntry = section && section.entries[this.activeEntryIndex];
         if (activeEntry !== undefined) {
-            const countyInput = document.getElementById(`wu-county-${this.activeEntryIndex}`);
             const processInput = document.getElementById(`wu-process-${this.activeEntryIndex}`);
+            const typeSelect = document.getElementById(`wu-type-${this.activeEntryIndex}`);
             const titleInput = document.getElementById(`wu-title-${this.activeEntryIndex}`);
             const contentInput = document.getElementById(`wu-content-${this.activeEntryIndex}`);
-
-            if (countyInput) {
-                // Save data on input (for persistence, without re-rendering)
-                countyInput.addEventListener('input', (e) => {
-                    const section = this.getActiveSection();
-                    if (section && section.entries[this.activeEntryIndex]) {
-                        section.entries[this.activeEntryIndex].county = e.target.value;
-                        this.saveData();
-                    }
-                });
-                // Update tab name on blur (when user finishes editing)
-                countyInput.addEventListener('blur', (e) => {
-                    this.updateEntryField(this.activeEntryIndex, 'county', e.target.value);
-                });
-            }
 
             if (processInput) {
                 // Save data on input (for persistence, without re-rendering)
@@ -497,6 +697,16 @@ class WeeklyUpdate {
                 // Update tab name on blur (when user finishes editing)
                 processInput.addEventListener('blur', (e) => {
                     this.updateEntryField(this.activeEntryIndex, 'process', e.target.value);
+                });
+            }
+
+            if (typeSelect) {
+                typeSelect.addEventListener('change', (e) => {
+                    const section = this.getActiveSection();
+                    if (section && section.entries[this.activeEntryIndex]) {
+                        section.entries[this.activeEntryIndex].type = e.target.value;
+                        this.saveData();
+                    }
                 });
             }
 
@@ -595,13 +805,12 @@ class WeeklyUpdate {
                     <div class="wu-entry-tabs">
                         ${activeSection.entries.map((entry, index) => {
                             const process = entry.process || 'DR';
-                            const county = entry.county || 'N/A';
                             return `
                                 <div 
                                     class="wu-entry-tab ${index === this.activeEntryIndex ? 'active' : ''}" 
                                     id="wu-entry-tab-${index}"
                                 >
-                                    <span>${process}::${county}::${index + 1}</span>
+                                    <span>${process}::${index + 1}</span>
                                     ${activeSection.entries.length > 1 ? `
                                         <button 
                                             id="wu-remove-entry-${index}" 
@@ -620,16 +829,6 @@ class WeeklyUpdate {
                                 <div class="wu-entry-card">
                                     <div class="wu-form-row">
                                         <div class="wu-form-field">
-                                            <label for="wu-county-${this.activeEntryIndex}">COUNTRY:</label>
-                                            <input 
-                                                type="text" 
-                                                id="wu-county-${this.activeEntryIndex}" 
-                                                class="wu-title-input"
-                                                placeholder="Enter country..."
-                                                value="${this.escapeHtml(activeEntry.county || 'N/A')}"
-                                            />
-                                        </div>
-                                        <div class="wu-form-field">
                                             <label for="wu-process-${this.activeEntryIndex}">PROCESS:</label>
                                             <input 
                                                 type="text" 
@@ -638,6 +837,17 @@ class WeeklyUpdate {
                                                 placeholder="Enter process..."
                                                 value="${this.escapeHtml(activeEntry.process || 'DR')}"
                                             />
+                                        </div>
+                                        <div class="wu-form-field">
+                                            <label for="wu-type-${this.activeEntryIndex}">TYPE:</label>
+                                            <select 
+                                                id="wu-type-${this.activeEntryIndex}" 
+                                                class="wu-title-input"
+                                            >
+                                                <option value="Info" ${activeEntry.type === 'Info' ? 'selected' : ''}>Info</option>
+                                                <option value="Action" ${activeEntry.type === 'Action' ? 'selected' : ''}>Action</option>
+                                                <option value="Urgent" ${activeEntry.type === 'Urgent' ? 'selected' : ''}>Urgent</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="wu-entry-field">
@@ -666,7 +876,9 @@ class WeeklyUpdate {
                 </div>
 
                 <div class="wu-actions">
-                    <button id="wu-export-btn" class="wu-btn-export">Export to Text File</button>
+                    <button id="wu-export-text-btn" class="wu-btn-export">Export to Text File</button>
+                    <button id="wu-export-eml-btn" class="wu-btn-export">Export Email (.eml for Outlook)</button>
+                    <button id="wu-copy-clipboard-btn" class="wu-btn-export">Copy to Clipboard (Outlook)</button>
                 </div>
             </div>
         `;
