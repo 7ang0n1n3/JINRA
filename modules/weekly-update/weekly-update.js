@@ -411,10 +411,10 @@ class WeeklyUpdate {
             // One header per section (DATE | REGION), then child blocks for each entry
             html += `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="${fontBase} border-collapse: collapse; table-layout: fixed;">`;
 
-            // Header row: DATE | REGION (only once per section)
+            // Header row: DATE | REGION (only once per section) - blue fill like the template
             html += `<tr>`;
-            html += `<td style="${cellBase} width: 50%;"><b>DATE</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${this.escapeHtml(dateText)}</td>`;
-            html += `<td style="${cellBase} width: 50%;"><b>REGION</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${this.escapeHtml(section.region || '')}</td>`;
+            html += `<td style="${cellBase} width: 50%; background-color: #1e5aa8; color: #ffffff;"><b>DATE</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${this.escapeHtml(dateText)}</td>`;
+            html += `<td style="${cellBase} width: 50%; background-color: #1e5aa8; color: #ffffff;"><b>REGION</b>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${this.escapeHtml(section.region || '')}</td>`;
             html += `</tr>`;
 
             let hasAnyEntry = false;
