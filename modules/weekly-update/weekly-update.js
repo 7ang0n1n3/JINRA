@@ -326,66 +326,6 @@ class WeeklyUpdate {
     }
 
     /**
-     * Export to text file
-     */
-    exportToText() {
-        let text = '';
-
-        this.sections.forEach((section, sectionIndex) => {
-            if (sectionIndex > 0) {
-                text += '\n\n';
-            }
-
-            const weekNumber = this.getWeekOfYear(section.date);
-            text += `DATE : ${section.date} (Week ${weekNumber})\n\n`;
-            text += `REGION  : ${section.region}\n\n`;
-
-            section.entries.forEach(entry => {
-                // Export entry if it has title, content, or process
-                const hasData = entry.title.trim() || entry.content.trim() || (entry.process && entry.process.trim() !== 'DR');
-                if (hasData) {
-                    text += `\tPROCESS : ${entry.process || 'DR'}\n`;
-                    text += `\tTYPE    : ${entry.type || 'Info'}\n`;
-                    text += `\tTITLE   : ${entry.title || ''}\n`;
-                    
-                    // Format detail - first line on same line as DETAIL label, subsequent lines aligned
-                    const contentLines = entry.content.split('\n');
-                    if (contentLines.length > 0 && contentLines[0].trim()) {
-                        // First line uses tab + "DETAIL  : " + content
-                        // Tab typically = 8 spaces, "DETAIL  : " = 10 characters
-                        // To align subsequent lines with content start + 4 chars, we need:
-                        // 8 (tab) + 10 ("DETAIL  : ") + 4 - 8 (correction) = 14 spaces
-                        text += `\tDETAIL  : ${contentLines[0]}\n`;
-                        // Subsequent lines: use spaces to match tab width + label + 4 extra chars - 8 correction
-                        const tabWidth = 8; // Standard tab width
-                        const labelWidth = 'DETAIL  : '.length; // 10 characters
-                        const extraIndent = 4; // 4 characters to the right
-                        const indent = ' '.repeat(tabWidth + labelWidth + extraIndent - 8); // 14 spaces (22 - 8 correction)
-                        for (let i = 1; i < contentLines.length; i++) {
-                            text += `${indent}${contentLines[i]}\n`;
-                        }
-                    } else {
-                        text += `\tDETAIL  :\n`;
-                    }
-                    text += '\n';
-                }
-            });
-        });
-
-        // Create and download file
-        const firstDate = this.sections[0]?.date || new Date().toISOString().split('T')[0];
-        const blob = new Blob([text], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Weekly-Update-${firstDate.replace(/\//g, '-')}.txt`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
-    /**
      * Build Outlook-friendly HTML body for clipboard/email exports.
      * Uses simple HTML and <font color> for best compatibility.
      */
@@ -585,7 +525,7 @@ class WeeklyUpdate {
         } catch (err) {
             document.body.removeChild(tempDiv);
             selection.removeAllRanges();
-            alert('Failed to copy to clipboard. Please try the text export instead.');
+            alert('Failed to copy to clipboard.');
         }
     }
 
@@ -593,14 +533,6 @@ class WeeklyUpdate {
      * Attach event listeners
      */
     attachEventListeners() {
-        // Export text button
-        const exportTextBtn = document.getElementById('wu-export-text-btn');
-        if (exportTextBtn) {
-            exportTextBtn.addEventListener('click', () => {
-                this.exportToText();
-            });
-        }
-
         // Export .eml for Outlook button
         const exportEmlBtn = document.getElementById('wu-export-eml-btn');
         if (exportEmlBtn) {
@@ -881,7 +813,6 @@ class WeeklyUpdate {
                 </div>
 
                 <div class="wu-actions">
-                    <button id="wu-export-text-btn" class="wu-btn-export">Export to Text File</button>
                     <button id="wu-export-eml-btn" class="wu-btn-export">Export Email (.eml for Outlook)</button>
                     <button id="wu-copy-clipboard-btn" class="wu-btn-export">Copy to Clipboard (Outlook)</button>
                 </div>
