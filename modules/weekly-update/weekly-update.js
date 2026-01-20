@@ -399,8 +399,10 @@ class WeeklyUpdate {
             if (sectionIndex > 0) {
                 // Page break between sections (Outlook/Word rendering)
                 html += '<div style="page-break-before: always;"></div>';
-                // Extra spacing for on-screen reading (ignored on print)
-                html += '<div style="height: 18px;"></div>';
+                // Outlook/Word can "collapse" sections unless there is actual content separation.
+                // Add two blank lines to prevent the next section from merging visually.
+                html += '<p style="margin:0; line-height:1;"><br></p>';
+                html += '<p style="margin:0; line-height:1;"><br></p>';
             }
 
             const weekNumber = this.getWeekOfYear(section.date);
