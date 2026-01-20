@@ -397,6 +397,9 @@ class WeeklyUpdate {
 
         this.sections.forEach((section, sectionIndex) => {
             if (sectionIndex > 0) {
+                // Page break between sections (Outlook/Word rendering)
+                html += '<div style="page-break-before: always;"></div>';
+                // Extra spacing for on-screen reading (ignored on print)
                 html += '<div style="height: 18px;"></div>';
             }
 
