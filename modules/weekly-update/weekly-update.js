@@ -209,6 +209,30 @@ class WeeklyUpdate {
     }
 
     /**
+     * Reorder entries in active section
+     */
+    reorderEntries(fromIndex, toIndex) {
+        const section = this.getActiveSection();
+        if (section && fromIndex !== toIndex) {
+            const entry = section.entries[fromIndex];
+            section.entries.splice(fromIndex, 1);
+            section.entries.splice(toIndex, 0, entry);
+            
+            // Update active entry index
+            if (this.activeEntryIndex === fromIndex) {
+                this.activeEntryIndex = toIndex;
+            } else if (fromIndex < this.activeEntryIndex && toIndex >= this.activeEntryIndex) {
+                this.activeEntryIndex--;
+            } else if (fromIndex > this.activeEntryIndex && toIndex <= this.activeEntryIndex) {
+                this.activeEntryIndex++;
+            }
+            
+            this.saveData();
+            this.renderAndAttach();
+        }
+    }
+
+    /**
      * Update entry title in active section
      */
     updateEntryTitle(index, title) {
@@ -593,14 +617,53 @@ class WeeklyUpdate {
             });
         }
 
-        // Entry tabs
+        // Entry tabs with drag-and-drop
         const section = this.getActiveSection();
         if (section) {
             section.entries.forEach((entry, index) => {
                 const entryTab = document.getElementById(`wu-entry-tab-${index}`);
                 if (entryTab) {
-                    entryTab.addEventListener('click', () => {
-                        this.switchEntry(index);
+                    // Click handler
+                    entryTab.addEventListener('click', (e) => {
+                        // Don't switch if clicking on remove button or drag handle
+                        if (!e.target.closest('.wu-entry-tab-remove') && !e.target.closest('.wu-drag-handle')) {
+                            this.switchEntry(index);
+                        }
+                    });
+
+                    // Drag and drop handlers
+                    entryTab.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.effectAllowed = 'move';
+                        e.dataTransfer.setData('text/plain', index.toString());
+                        entryTab.classList.add('wu-dragging');
+                    });
+
+                    entryTab.addEventListener('dragend', (e) => {
+                        entryTab.classList.remove('wu-dragging');
+                        // Remove all drag-over classes
+                        document.querySelectorAll('.wu-entry-tab').forEach(tab => {
+                            tab.classList.remove('wu-drag-over');
+                        });
+                    });
+
+                    entryTab.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        entryTab.classList.add('wu-drag-over');
+                    });
+
+                    entryTab.addEventListener('dragleave', (e) => {
+                        entryTab.classList.remove('wu-drag-over');
+                    });
+
+                    entryTab.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        entryTab.classList.remove('wu-drag-over');
+                        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                        const toIndex = index;
+                        if (!isNaN(fromIndex) && fromIndex !== toIndex) {
+                            this.reorderEntries(fromIndex, toIndex);
+                        }
                     });
                 }
 
@@ -746,7 +809,9 @@ class WeeklyUpdate {
                                 <div 
                                     class="wu-entry-tab ${index === this.activeEntryIndex ? 'active' : ''}" 
                                     id="wu-entry-tab-${index}"
+                                    draggable="true"
                                 >
+                                    <span class="wu-drag-handle" title="Drag to reorder">☰</span>
                                     <span>${process}::${index + 1}</span>
                                     ${activeSection.entries.length > 1 ? `
                                         <button 

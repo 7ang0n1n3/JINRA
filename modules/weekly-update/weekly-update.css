@@ -184,6 +184,7 @@
     color: rgba(255, 255, 255, 0.7);
     white-space: nowrap;
     position: relative;
+    user-select: none;
 }
 
 .wu-entry-tab:hover {
@@ -196,6 +197,37 @@
     border-color: rgba(255, 255, 255, 0.4);
     color: white;
     font-weight: 600;
+}
+
+.wu-entry-tab.wu-dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+.wu-entry-tab.wu-drag-over {
+    border-top: 4px solid #3b82f6;
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.6), inset 0 0 8px rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.wu-drag-handle {
+    cursor: grab;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    line-height: 1;
+    margin-right: 2px;
+    user-select: none;
+}
+
+.wu-drag-handle:active {
+    cursor: grabbing;
+}
+
+.wu-entry-tab:hover .wu-drag-handle {
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .wu-entry-tab-remove {
